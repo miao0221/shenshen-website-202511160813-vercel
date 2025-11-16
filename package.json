@@ -1,0 +1,13 @@
+{
+  "name": "zhoushen-website",
+  "version": "1.0.0",
+  "description": "周深粉丝网站",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve .",
+    "build": "echo 'No build step required'"
+  },
+  "keywords": ["zhoushen", "fans", "website"],
+  "author": "Zhoushen Fan Club",
+  "license": "MIT"
+}
