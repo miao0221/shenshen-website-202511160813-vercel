@@ -5,6 +5,11 @@ import { renderVideoPage } from './pages/video.js';
 import { renderAdminPage, setupAdminPage } from './pages/admin.js';
 import { renderAuthPage, setupAuthPage } from './pages/auth.js';
 import { renderProfilePage, setupProfilePage } from './pages/profile.js';
+import { renderTimeCapsulePage } from './pages/time-capsule.js';
+import { renderHonorWallPage } from './pages/honor-wall.js';
+import { renderMerchandisePage } from './pages/merchandise.js';
+import { renderInterviewsPage } from './pages/interviews.js';
+import { renderFansPage } from './pages/fans.js';
 
 // 注册路由
 router.register('/', renderHomePage);
@@ -13,6 +18,11 @@ router.register('/video', renderVideoPage);
 router.register('/admin', renderAdminPage);
 router.register('/auth', renderAuthPage);
 router.register('/profile', renderProfilePage);
+router.register('/time-capsule', renderTimeCapsulePage);
+router.register('/honor-wall', renderHonorWallPage);
+router.register('/merchandise', renderMerchandisePage);
+router.register('/interviews', renderInterviewsPage);
+router.register('/fans', renderFansPage);
 
 // 设置路由渲染后回调
 router.setAfterRender(() => {

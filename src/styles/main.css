@@ -10,39 +10,53 @@ body {
     background: linear-gradient(to bottom, #0a0a2a, #1a1a4a);
     color: #e6f7ff;
     min-height: 100vh;
-    padding-top: 80px;
+    padding-top: 100px;
+}
+
+/* 网站标题 */
+.site-title {
+    position: fixed;
+    top: 30px;
+    left: 5%;
+    z-index: 1001;
+    color: #64c8ff;
+    font-size: 1.5rem;
+    white-space: nowrap;
 }
 
 /* 导航栏样式 */
 .navbar {
     position: fixed;
-    top: 0;
-    width: 100%;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
     background: rgba(10, 10, 42, 0.9);
     backdrop-filter: blur(10px);
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(100, 200, 255, 0.2);
+    width: fit-content;
+    min-width: auto;
 }
 
 .nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    padding: 1rem 2rem;
+    padding: 0.75rem 2rem;
+    gap: 1.5rem;
 }
 
-.nav-logo {
-    color: #64c8ff;
-    font-size: 1.5rem;
-}
 
 .nav-menu {
     display: flex;
     list-style: none;
-    gap: 2rem;
+    gap: 1.5rem;
     align-items: center;
+    flex-wrap: nowrap;
+    margin: 0;
+    padding: 0;
 }
 
 .nav-link {
@@ -52,6 +66,7 @@ body {
     transition: color 0.3s ease;
     padding: 0.5rem 1rem;
     border-radius: 4px;
+    white-space: nowrap;
 }
 
 .nav-link:hover,
@@ -60,10 +75,143 @@ body {
     background: rgba(100, 200, 255, 0.2);
 }
 
+/* 用户认证区域 */
+.user-auth-area {
+    position: fixed;
+    top: 30px;
+    left: calc(50% + 520px);
+    z-index: 1001;
+    margin-left: 10px;
+}
+
+.user-auth-area #auth-links {
+    display: block;
+}
+
+.user-auth-area #auth-links .nav-link {
+    background: rgba(10, 10, 42, 0.9);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+    border-radius: 10px;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    text-align: center;
+    display: block;
+    font-weight: 500;
+    color: #cceeff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    min-width: auto;
+}
+
+.user-auth-area #auth-links .nav-link:hover {
+    color: #ffffff;
+    background: rgba(100, 200, 255, 0.2);
+}
+
 .welcome-text {
     color: #64c8ff;
     font-weight: 500;
-    margin: 0 10px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 用户下拉菜单 */
+.user-dropdown {
+    position: relative;
+}
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    background: rgba(10, 10, 42, 0.9);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+    transition: background 0.3s ease;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #cceeff;
+    text-decoration: none;
+    white-space: nowrap;
+    min-width: auto;
+}
+
+.dropdown-header:hover {
+    color: #ffffff;
+    background: rgba(100, 200, 255, 0.2);
+}
+
+.dropdown-arrow {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-header:hover .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: rgba(10, 10, 42, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    padding: 0.5rem;
+    min-width: 150px;
+    display: none;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 1001;
+    border: 1px solid rgba(100, 200, 255, 0.2);
+    margin-top: 0.5rem;
+}
+
+.dropdown-menu.show {
+    display: flex;
+}
+
+.dropdown-menu .nav-link,
+.dropdown-menu .btn-secondary {
+    width: 100%;
+    text-align: left;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+}
+
+.dropdown-menu .nav-link:hover,
+.dropdown-menu .btn-secondary:hover {
+    background: rgba(100, 200, 255, 0.2);
+}
+
+.btn-secondary {
+    background: rgba(200, 200, 200, 0.2);
+    color: #cceeff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-secondary:hover {
+    background: rgba(200, 200, 200, 0.3);
 }
 
 /* 主要内容区域 */
@@ -251,20 +399,6 @@ body {
     transform: translateY(-2px);
 }
 
-.btn-secondary {
-    background: rgba(200, 200, 200, 0.2);
-    color: #cceeff;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.btn-secondary:hover {
-    background: rgba(200, 200, 200, 0.3);
-}
-
 .login-form {
     max-width: 400px;
     margin: 2rem auto;
@@ -286,8 +420,9 @@ body {
 
 .error-message {
     color: #ff6b6b;
-    margin-top: 1rem;
-    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    display: none;
 }
 
 #upload-status {
@@ -346,6 +481,47 @@ body {
     color: #64c8ff;
     margin-bottom: 1.5rem;
     text-align: center;
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #cceeff;
+}
+
+.password-input-container {
+    position: relative;
+}
+
+.password-input-container input {
+    width: 100%;
+    padding-right: 2.5rem;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #cceeff;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+}
+
+.toggle-password svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
 }
 
 #auth-status {
@@ -411,4 +587,259 @@ body {
     text-align: center;
     padding: 2rem;
     color: #64c8ff;
+}
+
+/* 时间胶囊页面样式 */
+.time-capsule-page h2 {
+    color: #64c8ff;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.time-capsule-page p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.timeline {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.timeline-item {
+    background: rgba(26, 26, 74, 0.6);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #64c8ff;
+}
+
+.timeline-item h3 {
+    color: #64c8ff;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-item p {
+    color: #cceeff;
+    text-align: left;
+    margin-bottom: 0;
+}
+
+/* 荣誉墙页面样式 */
+.honor-wall-page h2 {
+    color: #64c8ff;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.honor-wall-page p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.awards-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.award-category {
+    background: rgba(26, 26, 74, 0.6);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.award-category h3 {
+    color: #64c8ff;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.award-category ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.award-category li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+    color: #cceeff;
+}
+
+.award-category li:last-child {
+    border-bottom: none;
+}
+
+/* 商务与周边页面样式 */
+.merchandise-page h2 {
+    color: #64c8ff;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.merchandise-page p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.merchandise-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.merchandise-category {
+    background: rgba(26, 26, 74, 0.6);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.merchandise-category h3 {
+    color: #64c8ff;
+    margin-bottom: 1rem;
+}
+
+.merchandise-category p {
+    color: #cceeff;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+/* 采访页面样式 */
+.interviews-page h2 {
+    color: #64c8ff;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.interviews-page p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.interviews-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.interview-category {
+    background: rgba(26, 26, 74, 0.6);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.interview-category h3 {
+    color: #64c8ff;
+    margin-bottom: 1rem;
+}
+
+.interview-category p {
+    color: #cceeff;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+/* 生米广场页面样式 */
+.fans-page h2 {
+    color: #64c8ff;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.fans-page p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.fans-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.fans-category {
+    background: rgba(26, 26, 74, 0.6);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.fans-category h3 {
+    color: #64c8ff;
+    margin-bottom: 1rem;
+}
+
+.fans-category p {
+    color: #cceeff;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .nav-container {
+        flex-wrap: wrap;
+    }
+    
+    .nav-menu {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+    
+    .user-auth-area {
+        position: absolute;
+        right: 2rem;
+        top: 1rem;
+    }
+    
+    #app {
+        padding: 1rem;
+    }
+    
+    .media-list,
+    .awards-section,
+    .merchandise-section,
+    .interviews-section,
+    .fans-section {
+        grid-template-columns: 1fr;
+    }
 }

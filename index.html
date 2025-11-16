@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>周深粉丝网站</title>
+    <title>深的N次方</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="./src/styles/main.css">
 </head>
 <body>
+    <!-- 网站标题 -->
+    <div class="site-title">
+        <h1>深的N次方</h1>
+    </div>
+    
     <nav class="navbar">
         <div class="nav-container">
-            <h1 class="nav-logo">周深粉丝网站</h1>
             <ul class="nav-menu">
                 <li class="nav-item">
                     <a href="#/" class="nav-link" data-route="/">首页</a>
@@ -21,22 +25,43 @@
                 <li class="nav-item">
                     <a href="#/video" class="nav-link" data-route="/video">视频</a>
                 </li>
-                <!-- 管理员中心链接，默认隐藏 -->
-                <li class="nav-item" id="admin-nav-item" style="display: none;">
-                    <a href="#/admin" class="nav-link" data-route="/admin" id="admin-link">管理员中心</a>
+                <li class="nav-item">
+                    <a href="#/time-capsule" class="nav-link" data-route="/time-capsule">时间胶囊</a>
                 </li>
-                <!-- 认证相关链接 -->
-                <li class="nav-item" id="auth-links">
-                    <a href="#/auth" class="nav-link" data-route="/auth" id="auth-link">登录/注册</a>
+                <li class="nav-item">
+                    <a href="#/honor-wall" class="nav-link" data-route="/honor-wall">荣誉墙</a>
                 </li>
-                <li class="nav-item" id="user-links" style="display: none;">
-                    <a href="#/profile" class="nav-link" data-route="/profile" id="profile-link">个人中心</a>
-                    <span class="welcome-text" id="welcome-text"></span>
-                    <button class="btn btn-secondary" id="logout-btn" style="margin-left: 10px;">退出登录</button>
+                <li class="nav-item">
+                    <a href="#/merchandise" class="nav-link" data-route="/merchandise">商务与周边</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#/interviews" class="nav-link" data-route="/interviews">采访</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#/fans" class="nav-link" data-route="/fans">生米广场</a>
                 </li>
             </ul>
         </div>
     </nav>
+    
+    <!-- 用户认证区域 -->
+    <div class="user-auth-area">
+        <div id="auth-links">
+            <a href="#/auth" class="nav-link" data-route="/auth" id="auth-link">登录/注册</a>
+        </div>
+        <div class="user-dropdown" id="user-dropdown" style="display: none;">
+            <div class="dropdown-header">
+                <span class="welcome-text" id="welcome-text"></span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="dropdown-menu" id="dropdown-menu">
+                <a href="#/profile" class="nav-link" data-route="/profile">个人中心</a>
+                <!-- 管理员中心链接，默认隐藏 -->
+                <a href="#/admin" class="nav-link" data-route="/admin" id="admin-link" style="display: none;">管理员中心</a>
+                <button class="btn btn-secondary" id="logout-btn">退出登录</button>
+            </div>
+        </div>
+    </div>
 
     <main id="app">
         <!-- 页面内容将在这里动态加载 -->
@@ -56,15 +81,33 @@
             } catch (error) {
                 console.error('检查用户登录状态时出错:', error);
             }
+            
+            // 添加下拉菜单事件监听器
+            const dropdownHeader = document.querySelector('.dropdown-header');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            
+            if (dropdownHeader && dropdownMenu) {
+                dropdownHeader.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('show');
+                });
+                
+                // 点击页面其他地方隐藏下拉菜单
+                document.addEventListener('click', (e) => {
+                    if (!dropdownHeader.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
         });
         
         // 更新认证UI
         async function updateAuthUI(session) {
             const authLinks = document.getElementById('auth-links');
-            const userLinks = document.getElementById('user-links');
+            const userDropdown = document.getElementById('user-dropdown');
             const welcomeText = document.getElementById('welcome-text');
             const logoutBtn = document.getElementById('logout-btn');
-            const adminNavItem = document.getElementById('admin-nav-item');
+            const adminLink = document.getElementById('admin-link');
             
             if (session) {
                 // 用户已登录
@@ -72,22 +115,40 @@
                     const { data: { user } } = await window.supabaseClient.auth.getUser();
                     const userEmail = user?.email || '用户';
                     
+                    // 获取用户昵称
+                    let userNickname = '';
+                    try {
+                        const { data: profile, error } = await window.supabaseClient
+                            .from('user_profiles')
+                            .select('nickname')
+                            .eq('id', user.id)
+                            .single();
+                        
+                        if (error && error.code !== 'PGRST116') { // PGRST116表示未找到记录
+                            console.error('获取用户资料时出错:', error);
+                        }
+                        
+                        userNickname = profile?.nickname || '';
+                    } catch (error) {
+                        console.error('获取用户资料时出错:', error);
+                    }
+                    
                     // 隐藏登录/注册链接
                     if (authLinks) {
                         authLinks.style.display = 'none';
                     }
                     
-                    // 显示个人中心链接、欢迎信息和退出按钮
-                    if (userLinks && welcomeText) {
-                        welcomeText.textContent = `欢迎, ${userEmail}`;
-                        userLinks.style.display = 'flex';
-                        userLinks.style.alignItems = 'center';
+                    // 显示用户下拉菜单和欢迎信息
+                    if (userDropdown && welcomeText) {
+                        const displayName = userNickname || userEmail;
+                        welcomeText.textContent = `欢迎 ${displayName}`;
+                        userDropdown.style.display = 'block';
                     }
                     
                     // 检查是否为管理员并显示管理员中心链接
-                    if (adminNavItem) {
+                    if (adminLink) {
                         const isAdmin = await checkIfAdmin(userEmail);
-                        adminNavItem.style.display = isAdmin ? 'list-item' : 'none';
+                        adminLink.style.display = isAdmin ? 'block' : 'none';
                     }
                     
                     // 设置退出按钮事件
@@ -101,17 +162,17 @@
                 // 用户未登录
                 // 显示登录/注册链接
                 if (authLinks) {
-                    authLinks.style.display = 'list-item';
+                    authLinks.style.display = 'block';
                 }
                 
-                // 隐藏个人中心链接、欢迎信息和退出按钮
-                if (userLinks) {
-                    userLinks.style.display = 'none';
+                // 隐藏用户下拉菜单
+                if (userDropdown) {
+                    userDropdown.style.display = 'none';
                 }
                 
                 // 隐藏管理员中心链接
-                if (adminNavItem) {
-                    adminNavItem.style.display = 'none';
+                if (adminLink) {
+                    adminLink.style.display = 'none';
                 }
             }
         }

@@ -89,10 +89,10 @@ class Router {
     // 更新认证UI
     async updateAuthUI(session) {
         const authLinks = document.getElementById('auth-links');
-        const userLinks = document.getElementById('user-links');
+        const userDropdown = document.getElementById('user-dropdown');
         const welcomeText = document.getElementById('welcome-text');
         const logoutBtn = document.getElementById('logout-btn');
-        const adminNavItem = document.getElementById('admin-nav-item');
+        const adminLink = document.getElementById('admin-link');
         
         if (session) {
             // 用户已登录
@@ -100,22 +100,40 @@ class Router {
                 const { data: { user } } = await window.supabaseClient.auth.getUser();
                 const userEmail = user?.email || '用户';
                 
+                // 获取用户昵称
+                let userNickname = '';
+                try {
+                    const { data: profile, error } = await window.supabaseClient
+                        .from('user_profiles')
+                        .select('nickname')
+                        .eq('id', user.id)
+                        .single();
+                    
+                    if (error && error.code !== 'PGRST116') { // PGRST116表示未找到记录
+                        console.error('获取用户资料时出错:', error);
+                    }
+                    
+                    userNickname = profile?.nickname || '';
+                } catch (error) {
+                    console.error('获取用户资料时出错:', error);
+                }
+                
                 // 隐藏登录/注册链接
                 if (authLinks) {
                     authLinks.style.display = 'none';
                 }
                 
-                // 显示个人中心链接、欢迎信息和退出按钮
-                if (userLinks && welcomeText) {
-                    welcomeText.textContent = `欢迎, ${userEmail}`;
-                    userLinks.style.display = 'flex';
-                    userLinks.style.alignItems = 'center';
+                // 显示用户下拉菜单和欢迎信息
+                if (userDropdown && welcomeText) {
+                    const displayName = userNickname || userEmail;
+                    welcomeText.textContent = `欢迎 ${displayName}`;
+                    userDropdown.style.display = 'block';
                 }
                 
                 // 检查是否为管理员并显示管理员中心链接
-                if (adminNavItem) {
+                if (adminLink) {
                     const isAdmin = await this.checkIfAdmin(userEmail);
-                    adminNavItem.style.display = isAdmin ? 'list-item' : 'none';
+                    adminLink.style.display = isAdmin ? 'block' : 'none';
                 }
                 
                 // 设置退出按钮事件
@@ -131,17 +149,17 @@ class Router {
             // 用户未登录
             // 显示登录/注册链接
             if (authLinks) {
-                authLinks.style.display = 'list-item';
+                authLinks.style.display = 'block';
             }
             
-            // 隐藏个人中心链接、欢迎信息和退出按钮
-            if (userLinks) {
-                userLinks.style.display = 'none';
+            // 隐藏用户下拉菜单
+            if (userDropdown) {
+                userDropdown.style.display = 'none';
             }
             
             // 隐藏管理员中心链接
-            if (adminNavItem) {
-                adminNavItem.style.display = 'none';
+            if (adminLink) {
+                adminLink.style.display = 'none';
             }
         }
     }
