@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>周深粉丝网站</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="./src/styles/main.css">
 </head>
 <body>
@@ -20,6 +21,16 @@
                 <li class="nav-item">
                     <a href="#/video" class="nav-link" data-route="/video">视频</a>
                 </li>
+                <!-- 认证相关链接 -->
+                <li class="nav-item">
+                    <a href="#/auth" class="nav-link" data-route="/auth" id="auth-link">登录/注册</a>
+                </li>
+                <li class="nav-item" id="profile-link-item" style="display: none;">
+                    <a href="#/profile" class="nav-link" data-route="/profile" id="profile-link">个人中心</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#/admin" class="nav-link" data-route="/admin" id="admin-link">文件上传</a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -28,6 +39,34 @@
         <!-- 页面内容将在这里动态加载 -->
     </main>
 
+    <script>
+        // 初始化Supabase客户端
+        const SUPABASE_URL = 'https://ywzqkjparfslwwvjuwlx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3enFranBhcmZzbHd3dmp1d2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMjI0ODYsImV4cCI6MjA3ODc5ODQ4Nn0.2fKie0CH12aoxvnUAO2IPrdZ1NtkyK8ujErx7FTiDxY';
+        window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // 检查用户登录状态并更新导航栏
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const { data: { session } } = await window.supabaseClient.auth.getSession();
+                const profileLinkItem = document.getElementById('profile-link-item');
+                
+                if (session) {
+                    // 用户已登录，显示个人中心链接
+                    if (profileLinkItem) {
+                        profileLinkItem.style.display = 'list-item';
+                    }
+                } else {
+                    // 用户未登录，隐藏个人中心链接
+                    if (profileLinkItem) {
+                        profileLinkItem.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('检查用户登录状态时出错:', error);
+            }
+        });
+    </script>
     <script type="module" src="./src/main.js"></script>
 </body>
 </html>

@@ -30,19 +30,33 @@ class Router {
         // 渲染新页面
         const appElement = document.getElementById('app');
         if (appElement && this.routes[hash]) {
-            // 显示加载状态
-            appElement.innerHTML = '<div class="loading">加载中...</div>';
-            
-            // 添加微任务延迟，确保DOM更新完成
-            await Promise.resolve();
-            
-            // 渲染页面内容
-            const pageContent = await this.routes[hash]();
-            appElement.innerHTML = pageContent;
-            
-            // 执行页面渲染后的回调
-            if (typeof this.afterRender === 'function') {
-                this.afterRender();
+            try {
+                // 显示加载状态
+                appElement.innerHTML = '<div class="loading">加载中...</div>';
+                
+                // 添加微任务延迟，确保DOM更新完成
+                await Promise.resolve();
+                
+                // 渲染页面内容
+                let pageContent;
+                if (this.routes[hash].constructor.name === 'AsyncFunction') {
+                    pageContent = await this.routes[hash]();
+                } else {
+                    pageContent = this.routes[hash]();
+                }
+                
+                appElement.innerHTML = pageContent;
+                
+                // 执行页面渲染后的回调
+                if (typeof this.afterRender === 'function') {
+                    this.afterRender();
+                }
+                
+                // 更新用户登录状态显示
+                await this.updateAuthStatus();
+            } catch (error) {
+                console.error('页面渲染错误:', error);
+                appElement.innerHTML = '<div class="error">页面加载失败</div>';
             }
         }
         
@@ -58,6 +72,27 @@ class Router {
                 link.classList.remove('active');
             }
         });
+    }
+
+    async updateAuthStatus() {
+        try {
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            const profileLinkItem = document.getElementById('profile-link-item');
+            
+            if (session) {
+                // 用户已登录，显示个人中心链接
+                if (profileLinkItem) {
+                    profileLinkItem.style.display = 'list-item';
+                }
+            } else {
+                // 用户未登录，隐藏个人中心链接
+                if (profileLinkItem) {
+                    profileLinkItem.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('更新认证状态时出错:', error);
+        }
     }
 
     setAfterRender(callback) {
