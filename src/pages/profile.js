@@ -28,10 +28,6 @@ export async function renderProfilePage() {
                             <p><strong>注册时间:</strong> ${new Date(user.created_at).toLocaleString()}</p>
                         </div>
                     </div>
-                    
-                    <div class="profile-actions">
-                        <button id="logout-btn" class="btn btn-secondary">退出登录</button>
-                    </div>
                 </div>
             </div>
         `;
@@ -49,12 +45,6 @@ export async function renderProfilePage() {
 }
 
 export function setupProfilePage() {
-    // 设置登出按钮事件
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
-    
     // 设置重试按钮事件
     const retryBtn = document.getElementById('retry-btn');
     if (retryBtn) {
@@ -64,14 +54,3 @@ export function setupProfilePage() {
     }
 }
 
-// 处理登出
-async function handleLogout() {
-    try {
-        await window.supabaseClient.auth.signOut();
-        window.location.hash = '#/auth';
-        window.location.reload();
-    } catch (error) {
-        console.error('登出失败:', error);
-        alert('登出失败: ' + error.message);
-    }
-}

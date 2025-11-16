@@ -42,6 +42,7 @@ body {
     display: flex;
     list-style: none;
     gap: 2rem;
+    align-items: center;
 }
 
 .nav-link {
@@ -57,6 +58,12 @@ body {
 .nav-link.active {
     color: #ffffff;
     background: rgba(100, 200, 255, 0.2);
+}
+
+.welcome-text {
+    color: #64c8ff;
+    font-weight: 500;
+    margin: 0 10px;
 }
 
 /* 主要内容区域 */
@@ -145,7 +152,7 @@ body {
     line-height: 1.6;
 }
 
-/* 管理员页面样式 */
+/* 管理员中心样式 */
 .admin-page h2,
 .admin-login h2 {
     color: #64c8ff;
@@ -247,6 +254,11 @@ body {
 .btn-secondary {
     background: rgba(200, 200, 200, 0.2);
     color: #cceeff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
 }
 
 .btn-secondary:hover {

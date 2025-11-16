@@ -6,8 +6,7 @@ export function renderAdminPage() {
     return `
         <div class="page-container admin-page">
             <div class="admin-header">
-                <h2>文件上传面板</h2>
-                <button id="logout-btn" class="btn btn-secondary" style="display:none;">退出登录</button>
+                <h2>管理员中心</h2>
             </div>
             
             <div class="admin-tabs">
@@ -75,22 +74,14 @@ export async function setupAdminPage() {
     // 检查用户是否已登录
     try {
         const { data: { session } } = await window.supabaseClient.auth.getSession();
-        const logoutBtn = document.getElementById('logout-btn');
-        
-        if (session) {
-            // 用户已登录，显示登出按钮
-            if (logoutBtn) {
-                logoutBtn.style.display = 'block';
-                logoutBtn.addEventListener('click', handleLogout);
-            }
-        } else {
+        if (!session) {
             // 用户未登录，显示登录提示
             const tabContent = document.querySelector('.tab-content');
             if (tabContent) {
                 tabContent.innerHTML = `
                     <div class="login-form">
                         <h2>需要登录</h2>
-                        <p>请先登录以访问文件上传功能</p>
+                        <p>请先登录以访问管理员中心</p>
                         <button id="go-to-auth" class="btn btn-primary">前往登录</button>
                     </div>
                 `;
@@ -102,6 +93,7 @@ export async function setupAdminPage() {
                     });
                 }
             }
+            return;
         }
     } catch (error) {
         console.error('检查认证状态时出错:', error);
@@ -142,17 +134,6 @@ export async function setupAdminPage() {
         if (videoForm) {
             videoForm.addEventListener('submit', handleVideoUpload);
         }
-    }
-}
-
-// 处理登出
-async function handleLogout() {
-    try {
-        await window.supabaseClient.auth.signOut();
-        window.location.hash = '#/auth';
-        window.location.reload();
-    } catch (error) {
-        console.error('登出失败:', error);
     }
 }
 

@@ -21,15 +21,17 @@
                 <li class="nav-item">
                     <a href="#/video" class="nav-link" data-route="/video">视频</a>
                 </li>
-                <!-- 认证相关链接 -->
                 <li class="nav-item">
+                    <a href="#/admin" class="nav-link" data-route="/admin" id="admin-link">管理员中心</a>
+                </li>
+                <!-- 认证相关链接 -->
+                <li class="nav-item" id="auth-links">
                     <a href="#/auth" class="nav-link" data-route="/auth" id="auth-link">登录/注册</a>
                 </li>
-                <li class="nav-item" id="profile-link-item" style="display: none;">
+                <li class="nav-item" id="user-links" style="display: none;">
                     <a href="#/profile" class="nav-link" data-route="/profile" id="profile-link">个人中心</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#/admin" class="nav-link" data-route="/admin" id="admin-link">文件上传</a>
+                    <span class="welcome-text" id="welcome-text"></span>
+                    <button class="btn btn-secondary" id="logout-btn" style="margin-left: 10px;">退出登录</button>
                 </li>
             </ul>
         </div>
@@ -49,23 +51,69 @@
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 const { data: { session } } = await window.supabaseClient.auth.getSession();
-                const profileLinkItem = document.getElementById('profile-link-item');
-                
-                if (session) {
-                    // 用户已登录，显示个人中心链接
-                    if (profileLinkItem) {
-                        profileLinkItem.style.display = 'list-item';
-                    }
-                } else {
-                    // 用户未登录，隐藏个人中心链接
-                    if (profileLinkItem) {
-                        profileLinkItem.style.display = 'none';
-                    }
-                }
+                updateAuthUI(session);
             } catch (error) {
                 console.error('检查用户登录状态时出错:', error);
             }
         });
+        
+        // 更新认证UI
+        async function updateAuthUI(session) {
+            const authLinks = document.getElementById('auth-links');
+            const userLinks = document.getElementById('user-links');
+            const welcomeText = document.getElementById('welcome-text');
+            const logoutBtn = document.getElementById('logout-btn');
+            
+            if (session) {
+                // 用户已登录
+                try {
+                    const { data: { user } } = await window.supabaseClient.auth.getUser();
+                    const userEmail = user?.email || '用户';
+                    
+                    // 隐藏登录/注册链接
+                    if (authLinks) {
+                        authLinks.style.display = 'none';
+                    }
+                    
+                    // 显示个人中心链接、欢迎信息和退出按钮
+                    if (userLinks && welcomeText) {
+                        welcomeText.textContent = `欢迎, ${userEmail}`;
+                        userLinks.style.display = 'flex';
+                        userLinks.style.alignItems = 'center';
+                    }
+                    
+                    // 设置退出按钮事件
+                    if (logoutBtn) {
+                        logoutBtn.onclick = handleLogout;
+                    }
+                } catch (error) {
+                    console.error('获取用户信息时出错:', error);
+                }
+            } else {
+                // 用户未登录
+                // 显示登录/注册链接
+                if (authLinks) {
+                    authLinks.style.display = 'list-item';
+                }
+                
+                // 隐藏个人中心链接、欢迎信息和退出按钮
+                if (userLinks) {
+                    userLinks.style.display = 'none';
+                }
+            }
+        }
+        
+        // 处理退出登录
+        async function handleLogout() {
+            try {
+                await window.supabaseClient.auth.signOut();
+                updateAuthUI(null);
+                window.location.hash = '#/';
+                window.location.reload();
+            } catch (error) {
+                console.error('登出失败:', error);
+            }
+        }
     </script>
     <script type="module" src="./src/main.js"></script>
 </body>

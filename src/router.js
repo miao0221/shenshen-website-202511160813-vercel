@@ -76,22 +76,73 @@ class Router {
 
     async updateAuthStatus() {
         try {
+            // 检查用户是否已登录
             const { data: { session } } = await window.supabaseClient.auth.getSession();
-            const profileLinkItem = document.getElementById('profile-link-item');
             
-            if (session) {
-                // 用户已登录，显示个人中心链接
-                if (profileLinkItem) {
-                    profileLinkItem.style.display = 'list-item';
-                }
-            } else {
-                // 用户未登录，隐藏个人中心链接
-                if (profileLinkItem) {
-                    profileLinkItem.style.display = 'none';
-                }
-            }
+            // 更新认证UI
+            await this.updateAuthUI(session);
         } catch (error) {
             console.error('更新认证状态时出错:', error);
+        }
+    }
+    
+    // 更新认证UI
+    async updateAuthUI(session) {
+        const authLinks = document.getElementById('auth-links');
+        const userLinks = document.getElementById('user-links');
+        const welcomeText = document.getElementById('welcome-text');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        if (session) {
+            // 用户已登录
+            try {
+                const { data: { user } } = await window.supabaseClient.auth.getUser();
+                const userEmail = user?.email || '用户';
+                
+                // 隐藏登录/注册链接
+                if (authLinks) {
+                    authLinks.style.display = 'none';
+                }
+                
+                // 显示个人中心链接、欢迎信息和退出按钮
+                if (userLinks && welcomeText) {
+                    welcomeText.textContent = `欢迎, ${userEmail}`;
+                    userLinks.style.display = 'flex';
+                    userLinks.style.alignItems = 'center';
+                }
+                
+                // 设置退出按钮事件
+                if (logoutBtn) {
+                    // 先移除已有的事件监听器
+                    logoutBtn.onclick = null;
+                    logoutBtn.onclick = this.handleLogout;
+                }
+            } catch (error) {
+                console.error('获取用户信息时出错:', error);
+            }
+        } else {
+            // 用户未登录
+            // 显示登录/注册链接
+            if (authLinks) {
+                authLinks.style.display = 'list-item';
+            }
+            
+            // 隐藏个人中心链接、欢迎信息和退出按钮
+            if (userLinks) {
+                userLinks.style.display = 'none';
+            }
+        }
+    }
+    
+    // 处理退出登录
+    handleLogout = async () => {
+        try {
+            await window.supabaseClient.auth.signOut();
+            await this.updateAuthUI(null);
+            window.location.hash = '#/';
+            window.location.reload();
+        } catch (error) {
+            console.error('登出失败:', error);
         }
     }
 
