@@ -769,6 +769,8 @@ body {
     border-radius: 8px;
     padding: 2rem;
     margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(100, 200, 255, 0.2);
 }
 
 .user-info-card h3 {
@@ -782,25 +784,142 @@ body {
     gap: 1rem;
 }
 
-.user-info p {
+.user-info .profile-field {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 0;
     border-bottom: 1px solid rgba(100, 200, 255, 0.1);
 }
 
-.user-info strong {
+.user-info .profile-field:last-child {
+    border-bottom: none;
+}
+
+.user-info .profile-field label {
     color: #64c8ff;
+    font-weight: 500;
+    min-width: 80px;
+}
+
+.user-info .profile-field span {
+    color: #cceeff;
+    text-align: right;
+    flex: 1;
+    word-break: break-all;
 }
 
 .profile-actions {
     text-align: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(100, 200, 255, 0.2);
+}
+
+.profile-actions .btn {
+    margin: 0 0.5rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
 }
 
 .loading {
     text-align: center;
     padding: 2rem;
     color: #64c8ff;
+}
+
+.profile-edit-form {
+    background: rgba(26, 26, 74, 0.6);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+}
+
+.profile-edit-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.profile-edit-form .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #64c8ff;
+    font-weight: 500;
+}
+
+.profile-edit-form .form-group input,
+.profile-edit-form .form-group textarea,
+.profile-edit-form .form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(10, 10, 42, 0.7);
+    border: 1px solid rgba(100, 200, 255, 0.3);
+    border-radius: 4px;
+    color: #e6f7ff;
+    font-size: 1rem;
+}
+
+.profile-edit-form .form-group input:focus,
+.profile-edit-form .form-group textarea:focus,
+.profile-edit-form .form-group select:focus {
+    outline: none;
+    border-color: #64c8ff;
+    box-shadow: 0 0 0 2px rgba(100, 200, 255, 0.2);
+}
+
+.profile-avatar {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(100, 200, 255, 0.3);
+}
+
+.profile-avatar .change-avatar-btn {
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.profile-security-settings {
+    background: rgba(26, 26, 74, 0.6);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+}
+
+.security-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.security-item:last-child {
+    border-bottom: none;
+}
+
+.security-item .security-label {
+    color: #64c8ff;
+    font-weight: 500;
+}
+
+.security-item .security-value {
+    color: #cceeff;
+    font-size: 0.9rem;
+}
+
+.security-item .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
 }
 
 /* 时间胶囊页面样式 */
