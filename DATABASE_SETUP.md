@@ -40,6 +40,41 @@ CREATE TABLE admins (
 );
 ```
 
+### tag_categories 表
+```sql
+-- 创建标签类别表
+CREATE TABLE tag_categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### tags 表
+```sql
+-- 创建标签表
+CREATE TABLE tags (
+  id SERIAL PRIMARY KEY,
+  category_id INTEGER REFERENCES tag_categories(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(category_id, name)
+);
+```
+
+### media_tags 表
+```sql
+-- 创建媒体标签关联表
+CREATE TABLE media_tags (
+  id SERIAL PRIMARY KEY,
+  media_type VARCHAR(10) NOT NULL, -- 'music' 或 'video'
+  media_id INTEGER NOT NULL,
+  tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(media_type, media_id, tag_id)
+);
+```
+
 ## 存储桶设置
 
 需要创建以下存储桶并设置为 public 访问：
@@ -54,6 +89,9 @@ CREATE TABLE admins (
 ALTER TABLE musics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tag_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE media_tags ENABLE ROW LEVEL SECURITY;
 ```
 
 ### 为 musics 表设置策略
@@ -106,6 +144,100 @@ GRANT SELECT ON TABLE admins TO anon;
 GRANT INSERT, DELETE ON TABLE admins TO authenticated;
 ```
 
+### 为 tag_categories 表设置策略
+```sql
+-- 允许任何人查看标签类别
+CREATE POLICY "Tag categories are viewable by everyone" ON tag_categories FOR SELECT USING (true);
+
+-- 允许管理员插入标签类别
+CREATE POLICY "Tag categories can be inserted by admins" ON tag_categories FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 允许管理员更新标签类别
+CREATE POLICY "Tag categories can be updated by admins" ON tag_categories FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+) WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 允许管理员删除标签类别
+CREATE POLICY "Tag categories can be deleted by admins" ON tag_categories FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 授予相关权限
+GRANT SELECT ON TABLE tag_categories TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE tag_categories TO authenticated;
+```
+
+### 为 tags 表设置策略
+```sql
+-- 允许任何人查看标签
+CREATE POLICY "Tags are viewable by everyone" ON tags FOR SELECT USING (true);
+
+-- 允许管理员插入标签
+CREATE POLICY "Tags can be inserted by admins" ON tags FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 允许管理员更新标签
+CREATE POLICY "Tags can be updated by admins" ON tags FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+) WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 允许管理员删除标签
+CREATE POLICY "Tags can be deleted by admins" ON tags FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 授予相关权限
+GRANT SELECT ON TABLE tags TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE tags TO authenticated;
+```
+
+### 为 media_tags 表设置策略
+```sql
+-- 允许任何人查看媒体标签关联
+CREATE POLICY "Media tags are viewable by everyone" ON media_tags FOR SELECT USING (true);
+
+-- 允许管理员插入媒体标签关联
+CREATE POLICY "Media tags can be inserted by admins" ON media_tags FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 允许管理员删除媒体标签关联
+CREATE POLICY "Media tags can be deleted by admins" ON media_tags FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 授予相关权限
+GRANT SELECT ON TABLE media_tags TO anon, authenticated;
+GRANT INSERT, DELETE ON TABLE media_tags TO authenticated;
+```
+
 ## 存储桶策略
 
 ### 为存储桶设置RLS策略
@@ -147,6 +279,20 @@ GRANT INSERT ON TABLE videos TO authenticated;
 
 GRANT SELECT ON TABLE admins TO anon;
 GRANT INSERT, DELETE ON TABLE admins TO authenticated;
+
+GRANT SELECT ON TABLE tag_categories TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE tag_categories TO authenticated;
+
+GRANT SELECT ON TABLE tags TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE tags TO authenticated;
+
+GRANT SELECT ON TABLE media_tags TO anon, authenticated;
+GRANT INSERT, DELETE ON TABLE media_tags TO authenticated;
+
+-- 授予序列权限
+GRANT USAGE ON SEQUENCE tag_categories_id_seq TO authenticated;
+GRANT USAGE ON SEQUENCE tags_id_seq TO authenticated;
+GRANT USAGE ON SEQUENCE media_tags_id_seq TO authenticated;
 ```
 
 ## 验证RLS策略
@@ -199,128 +345,4 @@ FROM pg_class
 WHERE relname IN ('musics', 'videos');
 
 -- 检查策略
-SELECT polname, polrelid::regclass, polcmd, polqual, polwithcheck 
-FROM pg_policy 
-WHERE polrelid::regclass IN ('musics', 'videos');
 ```
-
-### 高级故障排除
-
-如果以上步骤都不能解决问题，请尝试以下高级故障排除方法：
-
-#### 1. 检查表的所有者和权限
-
-```sql
--- 检查表的所有者
-SELECT tablename, tableowner FROM pg_tables WHERE tablename IN ('musics', 'videos');
-
--- 检查表的访问权限
-SELECT grantee, privilege_type 
-FROM information_schema.role_table_grants 
-WHERE table_name IN ('musics', 'videos') AND grantee = 'anon';
-```
-
-#### 2. 完全重置并重新创建表
-
-如果问题仍然存在，可能是表本身存在问题。请尝试删除并重新创建表：
-
-```sql
--- 1. 删除现有的表（注意：这会丢失所有数据）
-DROP TABLE IF EXISTS videos CASCADE;
-DROP TABLE IF EXISTS musics CASCADE;
-
--- 2. 重新创建表
-CREATE TABLE musics (
-  id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  album VARCHAR(255) NOT NULL,
-  year INTEGER NOT NULL,
-  url TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE videos (
-  id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  url TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- 3. 为两个表设置RLS和权限
-ALTER TABLE musics ENABLE ROW LEVEL SECURITY;
-ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "anon_select_policy" ON musics FOR SELECT USING (true);
-CREATE POLICY "anon_insert_policy" ON musics FOR INSERT WITH CHECK (true);
-GRANT ALL ON TABLE musics TO anon;
-GRANT USAGE ON SEQUENCE musics_id_seq TO anon;
-
-CREATE POLICY "anon_select_policy" ON videos FOR SELECT USING (true);
-CREATE POLICY "anon_insert_policy" ON videos FOR INSERT WITH CHECK (true);
-GRANT ALL ON TABLE videos TO anon;
-GRANT USAGE ON SEQUENCE videos_id_seq TO anon;
-```
-
-#### 3. 检查Supabase项目设置
-
-确保您的Supabase项目设置正确：
-
-1. 检查API设置中的"Enable access to unauthenticated users"是否已启用
-2. 确认您的SUPABASE_ANON_KEY正确无误
-3. 检查网络和CORS设置
-
-### 特定于当前问题的解决方案
-
-如果视频上传仍然失败而音乐上传成功，请尝试以下特定解决方案：
-
-#### 检查videos表结构是否与代码匹配
-
-在Supabase SQL编辑器中运行以下查询来检查表结构：
-
-```sql
--- 检查videos表结构
-SELECT column_name, data_type, is_nullable 
-FROM information_schema.columns 
-WHERE table_name = 'videos'
-ORDER BY ordinal_position;
-
--- 检查musics表结构进行对比
-SELECT column_name, data_type, is_nullable 
-FROM information_schema.columns 
-WHERE table_name = 'musics'
-ORDER BY ordinal_position;
-```
-
-确保videos表的结构与以下结构完全一致：
-- id (integer, NOT NULL)
-- title (character varying, NOT NULL)
-- description (text, 可以为NULL)
-- url (text, NOT NULL)
-- created_at (timestamp with time zone, 可以为NULL或有默认值)
-
-#### 检查是否存在触发器或其他约束
-
-```sql
--- 检查videos表上的触发器
-SELECT tgname, tgfoid, tgtype 
-FROM pg_trigger 
-WHERE tgrelid = 'videos'::regclass;
-
--- 检查videos表上的约束
-SELECT conname, contype, condef 
-FROM pg_constraint 
-WHERE conrelid = 'videos'::regclass;
-```
-
-#### 尝试直接在数据库中插入测试数据
-
-```sql
--- 测试直接插入数据
-INSERT INTO videos (title, description, url, created_at) 
-VALUES ('测试视频', '测试描述', 'https://example.com/test.mp4', NOW());
-```
-
-如果这个操作也失败了，说明问题出在表结构或权限上，而不是前端代码。
-
-完成这些步骤后，您的文件上传功能应该就可以正常工作了。

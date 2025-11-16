@@ -15,6 +15,7 @@ export function renderAdminPage() {
                 <button class="tab-btn" data-tab="video-upload">视频上传</button>
                 <button class="tab-btn" data-tab="manage-music">音乐管理</button>
                 <button class="tab-btn" data-tab="manage-videos">视频管理</button>
+                <button class="tab-btn" data-tab="tag-management">标签管理</button>
                 <button class="tab-btn" data-tab="admins">管理员管理</button>
             </div>
             
@@ -82,6 +83,78 @@ export function renderAdminPage() {
                     </div>
                 </div>
                 
+                <div id="tag-management-tab" class="tab-pane" style="display: none;">
+                    <h3>标签管理</h3>
+                    <div class="tag-management-container">
+                        <div class="tag-category-section">
+                            <h4>创建标签类别</h4>
+                            <form id="category-form" class="admin-form">
+                                <div class="form-group">
+                                    <label for="category-name">类别名称:</label>
+                                    <input type="text" id="category-name" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">创建类别</button>
+                            </form>
+                            
+                            <div id="category-list">
+                                <h4>现有类别</h4>
+                                <div id="categories-container">
+                                    <p>加载中...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tag-section">
+                            <h4>创建标签</h4>
+                            <form id="tag-form" class="admin-form">
+                                <div class="form-group">
+                                    <label for="tag-category">选择类别:</label>
+                                    <select id="tag-category" required>
+                                        <option value="">请选择类别</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tag-name">标签名称:</label>
+                                    <input type="text" id="tag-name" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">创建标签</button>
+                            </form>
+                            
+                            <div id="tag-list">
+                                <h4>现有标签</h4>
+                                <div id="tags-container">
+                                    <p>加载中...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="media-tag-section">
+                            <h4>给媒体添加标签</h4>
+                            <div class="media-selection">
+                                <label>
+                                    <input type="radio" name="media-type" value="music" checked> 音乐
+                                </label>
+                                <label>
+                                    <input type="radio" name="media-type" value="video"> 视频
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="media-selection">选择媒体:</label>
+                                <select id="media-selection" required>
+                                    <option value="">请选择媒体</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="media-tags">选择标签:</label>
+                                <select id="media-tags" multiple size="5">
+                                    <option value="">请先选择媒体</option>
+                                </select>
+                            </div>
+                            <button id="assign-tags-btn" class="btn btn-primary">分配标签</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="admins-tab" class="tab-pane" style="display: none;">
                     <h3>管理员管理</h3>
                     <div class="admin-form">
@@ -120,6 +193,20 @@ export function renderAdminPage() {
                             <label for="edit-music-year">年份:</label>
                             <input type="number" id="edit-music-year" required>
                         </div>
+                        
+                        <!-- 音乐标签管理 -->
+                        <div class="form-group">
+                            <label>标签管理:</label>
+                            <div id="music-tags-container">
+                                <p>加载标签中...</p>
+                            </div>
+                            <div class="tag-search-container">
+                                <input type="text" id="music-tag-search" placeholder="搜索标签..." class="tag-search-input">
+                                <div id="music-tag-search-results" class="tag-search-results"></div>
+                            </div>
+                            <button type="button" id="save-music-tags" class="btn btn-secondary">保存标签</button>
+                        </div>
+                        
                         <button type="submit" class="btn btn-primary">保存更改</button>
                     </form>
                 </div>
@@ -140,6 +227,20 @@ export function renderAdminPage() {
                             <label for="edit-video-description">描述:</label>
                             <textarea id="edit-video-description" rows="3" required></textarea>
                         </div>
+                        
+                        <!-- 视频标签管理 -->
+                        <div class="form-group">
+                            <label>标签管理:</label>
+                            <div id="video-tags-container">
+                                <p>加载标签中...</p>
+                            </div>
+                            <div class="tag-search-container">
+                                <input type="text" id="video-tag-search" placeholder="搜索标签..." class="tag-search-input">
+                                <div id="video-tag-search-results" class="tag-search-results"></div>
+                            </div>
+                            <button type="button" id="save-video-tags" class="btn btn-secondary">保存标签</button>
+                        </div>
+                        
                         <button type="submit" class="btn btn-primary">保存更改</button>
                     </form>
                 </div>
@@ -211,6 +312,8 @@ export async function setupAdminPage() {
                     loadMusicList();
                 } else if (tabName === 'manage-videos') {
                     loadVideoList();
+                } else if (tabName === 'tag-management') {
+                    loadTagManagement();
                 } else if (tabName === 'admins') {
                     loadAdmins();
                 }
@@ -245,6 +348,8 @@ export async function setupAdminPage() {
                     loadMusicList();
                 } else if (tabName === 'manage-videos') {
                     loadVideoList();
+                } else if (tabName === 'tag-management') {
+                    loadTagManagement();
                 } else if (tabName === 'admins') {
                     loadAdmins();
                 }
@@ -265,6 +370,28 @@ export async function setupAdminPage() {
             videoForm.addEventListener('submit', handleVideoUpload);
         }
         
+        // 设置标签管理表单事件
+        const categoryForm = document.getElementById('category-form');
+        if (categoryForm) {
+            categoryForm.addEventListener('submit', handleCreateCategory);
+        }
+        
+        const tagForm = document.getElementById('tag-form');
+        if (tagForm) {
+            tagForm.addEventListener('submit', handleCreateTag);
+        }
+        
+        const assignTagsBtn = document.getElementById('assign-tags-btn');
+        if (assignTagsBtn) {
+            assignTagsBtn.addEventListener('click', handleAssignTags);
+        }
+        
+        // 设置媒体类型切换事件
+        const mediaTypeRadios = document.querySelectorAll('input[name="media-type"]');
+        mediaTypeRadios.forEach(radio => {
+            radio.addEventListener('change', handleMediaTypeChange);
+        });
+        
         // 设置管理员管理事件
         const addAdminBtn = document.getElementById('add-admin-btn');
         if (addAdminBtn) {
@@ -284,6 +411,437 @@ export async function setupAdminPage() {
         
         // 设置模态框关闭事件
         setupModalEvents();
+        
+        // 设置标签保存按钮事件
+        const saveMusicTagsBtn = document.getElementById('save-music-tags');
+        if (saveMusicTagsBtn) {
+            saveMusicTagsBtn.addEventListener('click', () => {
+                const musicId = document.getElementById('edit-music-id').value;
+                const selectedTagIds = Array.from(document.querySelectorAll('#music-tags-container .selected-tag'))
+                    .map(tag => parseInt(tag.getAttribute('data-id')));
+                saveMediaTags('music', musicId, selectedTagIds);
+            });
+        }
+        
+        const saveVideoTagsBtn = document.getElementById('save-video-tags');
+        if (saveVideoTagsBtn) {
+            saveVideoTagsBtn.addEventListener('click', () => {
+                const videoId = document.getElementById('edit-video-id').value;
+                const selectedTagIds = Array.from(document.querySelectorAll('#video-tags-container .selected-tag'))
+                    .map(tag => parseInt(tag.getAttribute('data-id')));
+                saveMediaTags('video', videoId, selectedTagIds);
+            });
+        }
+    }
+}
+
+// 处理标签类别创建
+async function handleCreateCategory(e) {
+    e.preventDefault();
+    
+    const categoryName = document.getElementById('category-name').value.trim();
+    if (!categoryName) {
+        alert('请输入类别名称');
+        return;
+    }
+    
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('tag_categories')
+            .insert([{ name: categoryName }])
+            .select();
+        
+        if (error) throw error;
+        
+        alert('标签类别创建成功');
+        document.getElementById('category-name').value = '';
+        loadCategories(); // 重新加载类别列表
+        loadTagFormCategories(); // 更新标签表单中的类别选项
+    } catch (error) {
+        console.error('创建标签类别时出错:', error);
+        alert('创建标签类别失败: ' + error.message);
+    }
+}
+
+// 处理标签创建
+async function handleCreateTag(e) {
+    e.preventDefault();
+    
+    const categoryId = document.getElementById('tag-category').value;
+    const tagName = document.getElementById('tag-name').value.trim();
+    
+    if (!categoryId) {
+        alert('请选择标签类别');
+        return;
+    }
+    
+    if (!tagName) {
+        alert('请输入标签名称');
+        return;
+    }
+    
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('tags')
+            .insert([{ category_id: categoryId, name: tagName }])
+            .select();
+        
+        if (error) throw error;
+        
+        alert('标签创建成功');
+        document.getElementById('tag-name').value = '';
+        loadTags(); // 重新加载标签列表
+    } catch (error) {
+        console.error('创建标签时出错:', error);
+        alert('创建标签失败: ' + error.message);
+    }
+}
+
+// 处理媒体类型切换
+async function handleMediaTypeChange() {
+    const mediaType = document.querySelector('input[name="media-type"]:checked').value;
+    loadMediaSelection(mediaType);
+}
+
+// 处理标签分配
+async function handleAssignTags() {
+    const mediaType = document.querySelector('input[name="media-type"]:checked').value;
+    const mediaId = document.getElementById('media-selection').value;
+    const selectedTags = Array.from(document.getElementById('media-tags').selectedOptions)
+        .map(option => option.value);
+    
+    if (!mediaId) {
+        alert('请选择媒体');
+        return;
+    }
+    
+    if (selectedTags.length === 0) {
+        alert('请选择至少一个标签');
+        return;
+    }
+    
+    try {
+        // 先删除现有的标签关联
+        await window.supabaseClient
+            .from('media_tags')
+            .delete()
+            .eq('media_type', mediaType)
+            .eq('media_id', mediaId);
+        
+        // 插入新的标签关联
+        const mediaTags = selectedTags.map(tagId => ({
+            media_type: mediaType,
+            media_id: mediaId,
+            tag_id: tagId
+        }));
+        
+        const { error } = await window.supabaseClient
+            .from('media_tags')
+            .insert(mediaTags);
+        
+        if (error) throw error;
+        
+        alert('标签分配成功');
+    } catch (error) {
+        console.error('分配标签时出错:', error);
+        alert('分配标签失败: ' + error.message);
+    }
+}
+
+// 加载标签管理页面
+async function loadTagManagement() {
+    loadCategories();
+    loadTags();
+    loadTagFormCategories();
+    loadMediaSelection('music'); // 默认加载音乐
+}
+
+// 加载标签类别
+async function loadCategories() {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('tag_categories')
+            .select('*')
+            .order('name');
+        
+        if (error) throw error;
+        
+        const container = document.getElementById('categories-container');
+        if (!container) return;
+        
+        if (data.length === 0) {
+            container.innerHTML = '<p>暂无标签类别</p>';
+            return;
+        }
+        
+        let categoriesHTML = '<div class="category-list">';
+        data.forEach(category => {
+            categoriesHTML += `
+                <div class="category-item" data-id="${category.id}">
+                    <span>${category.name}</span>
+                    <button class="btn btn-danger btn-small delete-category-btn" data-id="${category.id}">删除</button>
+                </div>
+            `;
+        });
+        categoriesHTML += '</div>';
+        
+        container.innerHTML = categoriesHTML;
+        
+        // 添加删除按钮事件
+        document.querySelectorAll('.delete-category-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.getAttribute('data-id');
+                if (confirm('确定要删除这个类别吗？这将同时删除该类别下的所有标签。')) {
+                    deleteCategory(id);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('加载标签类别时出错:', error);
+        const container = document.getElementById('categories-container');
+        if (container) {
+            container.innerHTML = '<p>加载标签类别时出错: ' + error.message + '</p>';
+        }
+    }
+}
+
+// 加载标签表单中的类别选项
+async function loadTagFormCategories() {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('tag_categories')
+            .select('*')
+            .order('name');
+        
+        if (error) throw error;
+        
+        const select = document.getElementById('tag-category');
+        if (!select) return;
+        
+        if (data.length === 0) {
+            select.innerHTML = '<option value="">暂无类别，请先创建</option>';
+            return;
+        }
+        
+        let optionsHTML = '<option value="">请选择类别</option>';
+        data.forEach(category => {
+            optionsHTML += `<option value="${category.id}">${category.name}</option>`;
+        });
+        
+        select.innerHTML = optionsHTML;
+    } catch (error) {
+        console.error('加载标签类别选项时出错:', error);
+    }
+}
+
+// 加载标签
+async function loadTags() {
+    try {
+        // 先获取所有标签
+        const { data: tags, error: tagsError } = await window.supabaseClient
+            .from('tags')
+            .select('*')
+            .order('category_id');
+        
+        if (tagsError) throw tagsError;
+        
+        // 获取所有标签类别
+        const { data: categories, error: categoriesError } = await window.supabaseClient
+            .from('tag_categories')
+            .select('*');
+        
+        if (categoriesError) throw categoriesError;
+        
+        // 创建类别ID到名称的映射
+        const categoryMap = {};
+        categories.forEach(category => {
+            categoryMap[category.id] = category.name;
+        });
+        
+        const container = document.getElementById('tags-container');
+        if (!container) return;
+        
+        if (tags.length === 0) {
+            container.innerHTML = '<p>暂无标签</p>';
+            return;
+        }
+        
+        let tagsHTML = '<div class="tag-list">';
+        tags.forEach(tag => {
+            const categoryName = categoryMap[tag.category_id] || '未知类别';
+            tagsHTML += `
+                <div class="tag-item" data-id="${tag.id}">
+                    <span>${categoryName} - ${tag.name}</span>
+                    <button class="btn btn-danger btn-small delete-tag-btn" data-id="${tag.id}">删除</button>
+                </div>
+            `;
+        });
+        tagsHTML += '</div>';
+        
+        container.innerHTML = tagsHTML;
+        
+        // 添加删除按钮事件
+        document.querySelectorAll('.delete-tag-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.getAttribute('data-id');
+                if (confirm('确定要删除这个标签吗？')) {
+                    deleteTag(id);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('加载标签时出错:', error);
+        const container = document.getElementById('tags-container');
+        if (container) {
+            container.innerHTML = '<p>加载标签时出错: ' + error.message + '</p>';
+        }
+    }
+}
+
+// 加载媒体选择列表
+async function loadMediaSelection(mediaType) {
+    try {
+        let data, error;
+        
+        if (mediaType === 'music') {
+            const result = await window.supabaseClient
+                .from('musics')
+                .select('id, title')
+                .order('title');
+            data = result.data;
+            error = result.error;
+        } else {
+            const result = await window.supabaseClient
+                .from('videos')
+                .select('id, title')
+                .order('title');
+            data = result.data;
+            error = result.error;
+        }
+        
+        if (error) throw error;
+        
+        const select = document.getElementById('media-selection');
+        if (!select) return;
+        
+        if (data.length === 0) {
+            select.innerHTML = '<option value="">暂无媒体</option>';
+            return;
+        }
+        
+        let optionsHTML = '<option value="">请选择媒体</option>';
+        data.forEach(item => {
+            optionsHTML += `<option value="${item.id}">${item.title}</option>`;
+        });
+        
+        select.innerHTML = optionsHTML;
+        
+        // 清空标签选择
+        document.getElementById('media-tags').innerHTML = '<option value="">请先选择媒体</option>';
+        
+        // 添加媒体选择变化事件
+        select.addEventListener('change', () => {
+            const mediaId = select.value;
+            if (mediaId) {
+                loadMediaTags(mediaType, mediaId);
+            } else {
+                document.getElementById('media-tags').innerHTML = '<option value="">请先选择媒体</option>';
+            }
+        });
+    } catch (error) {
+        console.error('加载媒体选择列表时出错:', error);
+    }
+}
+
+// 加载媒体的标签
+async function loadMediaTags(mediaType, mediaId) {
+    try {
+        // 获取所有标签
+        const { data: allTags, error: tagsError } = await window.supabaseClient
+            .from('tags')
+            .select('*')
+            .order('category_id');
+        
+        if (tagsError) throw tagsError;
+        
+        // 获取所有标签类别
+        const { data: categories, error: categoriesError } = await window.supabaseClient
+            .from('tag_categories')
+            .select('*');
+        
+        if (categoriesError) throw categoriesError;
+        
+        // 创建类别ID到名称的映射
+        const categoryMap = {};
+        categories.forEach(category => {
+            categoryMap[category.id] = category.name;
+        });
+        
+        // 获取媒体已有的标签
+        const { data: mediaTags, error: mediaTagsError } = await window.supabaseClient
+            .from('media_tags')
+            .select('tag_id')
+            .eq('media_type', mediaType)
+            .eq('media_id', mediaId);
+        
+        if (mediaTagsError) throw mediaTagsError;
+        
+        const selectedTagIds = mediaTags.map(item => item.tag_id);
+        
+        const select = document.getElementById('media-tags');
+        if (!select) return;
+        
+        if (allTags.length === 0) {
+            select.innerHTML = '<option value="">暂无标签</option>';
+            return;
+        }
+        
+        let optionsHTML = '';
+        allTags.forEach(tag => {
+            const categoryName = categoryMap[tag.category_id] || '未知类别';
+            const selected = selectedTagIds.includes(tag.id) ? 'selected' : '';
+            optionsHTML += `<option value="${tag.id}" ${selected}>${categoryName} - ${tag.name}</option>`;
+        });
+        
+        select.innerHTML = optionsHTML;
+    } catch (error) {
+        console.error('加载媒体标签时出错:', error);
+    }
+}
+
+// 删除标签类别
+async function deleteCategory(id) {
+    try {
+        const { error } = await window.supabaseClient
+            .from('tag_categories')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        loadCategories();
+        loadTagFormCategories();
+        loadTags();
+    } catch (error) {
+        console.error('删除标签类别时出错:', error);
+        alert('删除标签类别失败: ' + error.message);
+    }
+}
+
+// 删除标签
+async function deleteTag(id) {
+    try {
+        const { error } = await window.supabaseClient
+            .from('tags')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        loadTags();
+    } catch (error) {
+        console.error('删除标签时出错:', error);
+        alert('删除标签失败: ' + error.message);
     }
 }
 
@@ -579,6 +1137,9 @@ function openEditMusicModal(music) {
     document.getElementById('edit-music-year').value = music.year;
     
     document.getElementById('edit-music-modal').style.display = 'block';
+    
+    // 加载音乐标签
+    loadMusicTags(music.id);
 }
 
 // 打开编辑视频模态框
@@ -588,6 +1149,255 @@ function openEditVideoModal(video) {
     document.getElementById('edit-video-description').value = video.description;
     
     document.getElementById('edit-video-modal').style.display = 'block';
+    
+    // 加载视频标签
+    loadVideoTags(video.id);
+}
+
+// 加载音乐标签
+async function loadMusicTags(musicId) {
+    try {
+        // 获取所有标签
+        const { data: allTags, error: tagsError } = await window.supabaseClient
+            .from('tags')
+            .select('*')
+            .order('category_id');
+        
+        if (tagsError) throw tagsError;
+        
+        // 获取所有标签类别
+        const { data: categories, error: categoriesError } = await window.supabaseClient
+            .from('tag_categories')
+            .select('*');
+        
+        if (categoriesError) throw categoriesError;
+        
+        // 创建类别ID到名称的映射
+        const categoryMap = {};
+        categories.forEach(category => {
+            categoryMap[category.id] = category.name;
+        });
+        
+        // 获取音乐已有的标签
+        const { data: mediaTags, error: mediaTagsError } = await window.supabaseClient
+            .from('media_tags')
+            .select('tag_id')
+            .eq('media_type', 'music')
+            .eq('media_id', musicId);
+        
+        if (mediaTagsError) throw mediaTagsError;
+        
+        const selectedTagIds = mediaTags.map(item => item.tag_id);
+        
+        // 显示已选择的标签
+        displaySelectedTags('music', selectedTagIds, allTags, categoryMap);
+        
+        // 设置标签搜索功能
+        setupTagSearch('music', allTags, categoryMap, selectedTagIds);
+        
+        // 保存按钮事件
+        document.getElementById('save-music-tags').onclick = () => saveMediaTags('music', musicId, selectedTagIds);
+    } catch (error) {
+        console.error('加载音乐标签时出错:', error);
+        document.getElementById('music-tags-container').innerHTML = '<p>加载标签时出错: ' + error.message + '</p>';
+    }
+}
+
+// 加载视频标签
+async function loadVideoTags(videoId) {
+    try {
+        // 获取所有标签
+        const { data: allTags, error: tagsError } = await window.supabaseClient
+            .from('tags')
+            .select('*')
+            .order('category_id');
+        
+        if (tagsError) throw tagsError;
+        
+        // 获取所有标签类别
+        const { data: categories, error: categoriesError } = await window.supabaseClient
+            .from('tag_categories')
+            .select('*');
+        
+        if (categoriesError) throw categoriesError;
+        
+        // 创建类别ID到名称的映射
+        const categoryMap = {};
+        categories.forEach(category => {
+            categoryMap[category.id] = category.name;
+        });
+        
+        // 获取视频已有的标签
+        const { data: mediaTags, error: mediaTagsError } = await window.supabaseClient
+            .from('media_tags')
+            .select('tag_id')
+            .eq('media_type', 'video')
+            .eq('media_id', videoId);
+        
+        if (mediaTagsError) throw mediaTagsError;
+        
+        const selectedTagIds = mediaTags.map(item => item.tag_id);
+        
+        // 显示已选择的标签
+        displaySelectedTags('video', selectedTagIds, allTags, categoryMap);
+        
+        // 设置标签搜索功能
+        setupTagSearch('video', allTags, categoryMap, selectedTagIds);
+        
+        // 保存按钮事件
+        document.getElementById('save-video-tags').onclick = () => saveMediaTags('video', videoId, selectedTagIds);
+    } catch (error) {
+        console.error('加载视频标签时出错:', error);
+        document.getElementById('video-tags-container').innerHTML = '<p>加载标签时出错: ' + error.message + '</p>';
+    }
+}
+
+// 显示已选择的标签
+function displaySelectedTags(mediaType, selectedTagIds, allTags, categoryMap) {
+    const container = document.getElementById(`${mediaType}-tags-container`);
+    if (!container) return;
+    
+    if (selectedTagIds.length === 0) {
+        container.innerHTML = '<p>暂无标签</p>';
+        return;
+    }
+    
+    // 获取选中的标签详细信息
+    const selectedTags = allTags.filter(tag => selectedTagIds.includes(tag.id));
+    
+    let tagsHTML = '<div class="tag-selection">';
+    selectedTags.forEach(tag => {
+        const categoryName = categoryMap[tag.category_id] || '未知类别';
+        tagsHTML += `
+            <span class="selected-tag" data-id="${tag.id}">
+                ${categoryName}: ${tag.name}
+                <span class="remove-tag" data-id="${tag.id}">&times;</span>
+            </span>
+        `;
+    });
+    tagsHTML += '</div>';
+    
+    container.innerHTML = tagsHTML;
+    
+    // 添加删除标签事件
+    container.querySelectorAll('.remove-tag').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tagId = parseInt(e.target.getAttribute('data-id'));
+            const index = selectedTagIds.indexOf(tagId);
+            if (index > -1) {
+                selectedTagIds.splice(index, 1);
+                displaySelectedTags(mediaType, selectedTagIds, allTags, categoryMap);
+                setupTagSearch(mediaType, allTags, categoryMap, selectedTagIds);
+            }
+        });
+    });
+}
+
+// 设置标签搜索功能
+function setupTagSearch(mediaType, allTags, categoryMap, selectedTagIds) {
+    const searchInput = document.getElementById(`${mediaType}-tag-search`);
+    const searchResults = document.getElementById(`${mediaType}-tag-search-results`);
+    
+    if (!searchInput || !searchResults) return;
+    
+    searchInput.oninput = (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        
+        if (searchTerm.length === 0) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        // 过滤标签
+        const filteredTags = allTags.filter(tag => {
+            const categoryName = categoryMap[tag.category_id] || '未知类别';
+            return (
+                tag.name.toLowerCase().includes(searchTerm) ||
+                categoryName.toLowerCase().includes(searchTerm)
+            );
+        });
+        
+        if (filteredTags.length === 0) {
+            searchResults.innerHTML = '<div class="tag-search-result">未找到匹配的标签</div>';
+            searchResults.style.display = 'block';
+            return;
+        }
+        
+        let resultsHTML = '';
+        filteredTags.forEach(tag => {
+            const categoryName = categoryMap[tag.category_id] || '未知类别';
+            const selected = selectedTagIds.includes(tag.id) ? 'selected' : '';
+            resultsHTML += `
+                <div class="tag-search-result ${selected}" data-id="${tag.id}">
+                    ${categoryName}: ${tag.name}
+                </div>
+            `;
+        });
+        
+        searchResults.innerHTML = resultsHTML;
+        searchResults.style.display = 'block';
+        
+        // 添加点击事件
+        searchResults.querySelectorAll('.tag-search-result').forEach(result => {
+            result.addEventListener('click', (e) => {
+                const tagId = parseInt(e.currentTarget.getAttribute('data-id'));
+                const index = selectedTagIds.indexOf(tagId);
+                
+                if (index > -1) {
+                    // 如果已选择，则移除
+                    selectedTagIds.splice(index, 1);
+                    e.currentTarget.classList.remove('selected');
+                } else {
+                    // 如果未选择，则添加
+                    selectedTagIds.push(tagId);
+                    e.currentTarget.classList.add('selected');
+                }
+                
+                // 更新显示的标签
+                displaySelectedTags(mediaType, selectedTagIds, allTags, categoryMap);
+            });
+        });
+    };
+    
+    // 点击其他地方隐藏搜索结果
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+}
+
+// 保存媒体标签
+async function saveMediaTags(mediaType, mediaId, selectedTagIds) {
+    try {
+        // 先删除现有的标签关联
+        await window.supabaseClient
+            .from('media_tags')
+            .delete()
+            .eq('media_type', mediaType)
+            .eq('media_id', mediaId);
+        
+        // 插入新的标签关联
+        if (selectedTagIds.length > 0) {
+            const mediaTags = selectedTagIds.map(tagId => ({
+                media_type: mediaType,
+                media_id: mediaId,
+                tag_id: tagId
+            }));
+            
+            const { error } = await window.supabaseClient
+                .from('media_tags')
+                .insert(mediaTags);
+            
+            if (error) throw error;
+        }
+        
+        alert('标签保存成功');
+    } catch (error) {
+        console.error('保存标签时出错:', error);
+        alert('保存标签失败: ' + error.message);
+    }
 }
 
 // 处理音乐编辑
@@ -600,6 +1410,7 @@ async function handleEditMusic(e) {
         const album = document.getElementById('edit-music-album').value;
         const year = document.getElementById('edit-music-year').value;
         
+        // 更新音乐信息
         const { error } = await window.supabaseClient
             .from('musics')
             .update({ title, album, year: parseInt(year) })
@@ -631,6 +1442,7 @@ async function handleEditVideo(e) {
         const title = document.getElementById('edit-video-title').value;
         const description = document.getElementById('edit-video-description').value;
         
+        // 更新视频信息
         const { error } = await window.supabaseClient
             .from('videos')
             .update({ title, description })
@@ -740,7 +1552,7 @@ async function uploadFileToSupabase(file, bucket, fileName) {
                 resolve(publicUrl);
             })
             .catch(error => {
-                console.error('文件上传异常:', error);
+                console.error('文件上传错误:', error);
                 reject(error);
             });
     });
