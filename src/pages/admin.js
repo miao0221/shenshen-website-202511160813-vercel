@@ -1,3 +1,5 @@
+import { isAdmin, addAdmin, removeAdmin, getAdmins } from '../utils/admin.js';
+
 // 管理员页面模块
 let isAuthenticated = false;
 
@@ -12,6 +14,7 @@ export function renderAdminPage() {
             <div class="admin-tabs">
                 <button class="tab-btn active" data-tab="music">音乐上传</button>
                 <button class="tab-btn" data-tab="video">视频上传</button>
+                <button class="tab-btn" data-tab="admins">管理员管理</button>
             </div>
             
             <div class="tab-content">
@@ -63,6 +66,22 @@ export function renderAdminPage() {
                         <button type="submit" class="btn btn-primary">上传视频</button>
                     </form>
                 </div>
+                
+                <div id="admins-tab" class="tab-pane" style="display: none;">
+                    <h3>管理员管理</h3>
+                    <div class="admin-form">
+                        <div class="form-group">
+                            <label for="new-admin-email">添加管理员 (输入用户邮箱):</label>
+                            <input type="email" id="new-admin-email" placeholder="user@example.com">
+                        </div>
+                        <button id="add-admin-btn" class="btn btn-primary">添加管理员</button>
+                        
+                        <div id="admin-list">
+                            <h4>当前管理员列表</h4>
+                            <div id="admins-container"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div id="upload-status"></div>
@@ -71,7 +90,7 @@ export function renderAdminPage() {
 }
 
 export async function setupAdminPage() {
-    // 检查用户是否已登录
+    // 检查用户是否已登录且为管理员
     try {
         const { data: { session } } = await window.supabaseClient.auth.getSession();
         if (!session) {
@@ -90,6 +109,29 @@ export async function setupAdminPage() {
                 if (goToAuthBtn) {
                     goToAuthBtn.addEventListener('click', () => {
                         window.location.hash = '#/auth';
+                    });
+                }
+            }
+            return;
+        }
+        
+        // 检查用户是否为管理员
+        const userIsAdmin = await isAdmin();
+        if (!userIsAdmin) {
+            const tabContent = document.querySelector('.tab-content');
+            if (tabContent) {
+                tabContent.innerHTML = `
+                    <div class="login-form">
+                        <h2>权限不足</h2>
+                        <p>您不是管理员，无法访问此功能</p>
+                        <button id="go-to-home" class="btn btn-primary">返回首页</button>
+                    </div>
+                `;
+                
+                const goToHomeBtn = document.getElementById('go-to-home');
+                if (goToHomeBtn) {
+                    goToHomeBtn.addEventListener('click', () => {
+                        window.location.hash = '#/';
                     });
                 }
             }
@@ -118,6 +160,11 @@ export async function setupAdminPage() {
             const targetPane = document.getElementById(tabName + '-tab');
             if (targetPane) {
                 targetPane.style.display = 'block';
+                
+                // 如果是管理员标签，加载管理员列表
+                if (tabName === 'admins') {
+                    loadAdmins();
+                }
             }
         });
     });
@@ -133,6 +180,12 @@ export async function setupAdminPage() {
         const videoForm = document.getElementById('video-form');
         if (videoForm) {
             videoForm.addEventListener('submit', handleVideoUpload);
+        }
+        
+        // 设置管理员管理事件
+        const addAdminBtn = document.getElementById('add-admin-btn');
+        if (addAdminBtn) {
+            addAdminBtn.addEventListener('click', handleAddAdmin);
         }
     }
 }
@@ -223,6 +276,62 @@ async function handleVideoUpload(e) {
     } catch (error) {
         console.error('上传视频时出错:', error);
         statusDiv.innerHTML = '<p class="error">上传失败: ${error.message}</p>';
+    }
+}
+
+// 处理添加管理员
+async function handleAddAdmin() {
+    const emailInput = document.getElementById('new-admin-email');
+    const email = emailInput.value.trim();
+    
+    if (!email) {
+        alert('请输入邮箱地址');
+        return;
+    }
+    
+    try {
+        // 添加管理员
+        const success = await addAdmin(email);
+        if (success) {
+            alert('管理员添加成功');
+            emailInput.value = '';
+            loadAdmins(); // 重新加载管理员列表
+        } else {
+            alert('添加管理员失败，可能该邮箱未注册或已为管理员');
+        }
+    } catch (error) {
+        console.error('添加管理员时出错:', error);
+        alert('添加管理员时出错: ' + error.message);
+    }
+}
+
+// 加载管理员列表
+async function loadAdmins() {
+    try {
+        const admins = await getAdmins();
+        const container = document.getElementById('admins-container');
+        
+        if (!container) return;
+        
+        if (admins.length === 0) {
+            container.innerHTML = '<p>暂无管理员</p>';
+            return;
+        }
+        
+        // 显示管理员列表
+        let adminListHTML = '<ul class="admin-list">';
+        for (const admin of admins) {
+            adminListHTML += `<li>${admin.email}</li>`;
+        }
+        adminListHTML += '</ul>';
+        
+        container.innerHTML = adminListHTML;
+    } catch (error) {
+        console.error('加载管理员列表时出错:', error);
+        const container = document.getElementById('admins-container');
+        if (container) {
+            container.innerHTML = '<p>加载管理员列表时出错</p>';
+        }
     }
 }
 

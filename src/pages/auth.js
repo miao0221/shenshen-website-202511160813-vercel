@@ -119,9 +119,9 @@ async function handleLogin(e) {
         
         statusDiv.innerHTML = '<p class="success">登录成功!</p>';
         
-        // 登录成功后刷新页面或跳转到管理页面
+        // 登录成功后刷新页面并跳转到首页
         setTimeout(() => {
-            window.location.hash = '#/admin';
+            window.location.hash = '#/';
             window.location.reload();
         }, 1000);
     } catch (error) {

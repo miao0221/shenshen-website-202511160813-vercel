@@ -2,10 +2,9 @@
 
 本指南将帮助您在 Supabase 中创建项目所需的数据库表。
 
-## 创建 `musics` 表
+## 表结构
 
-在 Supabase 控制台中执行以下 SQL 语句来创建 `musics` 表：
-
+### musics 表
 ```sql
 CREATE TABLE musics (
   id SERIAL PRIMARY KEY,
@@ -13,138 +12,141 @@ CREATE TABLE musics (
   album VARCHAR(255) NOT NULL,
   year INTEGER NOT NULL,
   url TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW()
 );
 ```
 
-## 创建 `videos` 表
-
-在 Supabase 控制台中执行以下 SQL 语句来创建 `videos` 表：
-
+### videos 表
 ```sql
 CREATE TABLE videos (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT,
   url TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW()
 );
 ```
 
-## 设置表权限和RLS（行级安全）
-
-为了让前端应用能够访问这些表，您需要设置适当的权限并配置行级安全策略：
-
-### 1. 为 `musics` 表设置权限
-
+### admins 表
 ```sql
--- 启用行级安全
+-- 删除旧的admins表（如果存在）
+DROP TABLE IF EXISTS admins CASCADE;
+
+-- 创建新的admins表，使用邮箱作为管理员标识
+CREATE TABLE admins (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## 存储桶设置
+
+需要创建以下存储桶并设置为 public 访问：
+- images
+- music
+- videos
+
+## 行级安全策略 (RLS)
+
+### 启用RLS
+```sql
 ALTER TABLE musics ENABLE ROW LEVEL SECURITY;
-
--- 允许所有人查看音乐
-CREATE POLICY "Everyone can view music" ON musics
-  FOR SELECT USING (true);
-
--- 允许匿名用户插入音乐
-CREATE POLICY "Anonymous users can insert music" ON musics
-  FOR INSERT WITH CHECK (true);
-
--- 授予访问权限
-GRANT SELECT ON musics TO anon;
-GRANT INSERT ON musics TO anon;
-```
-
-### 2. 为 `videos` 表设置权限
-
-```sql
--- 启用行级安全
 ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
-
--- 允许所有人查看视频
-CREATE POLICY "Everyone can view videos" ON videos
-  FOR SELECT USING (true);
-
--- 允许匿名用户插入视频
-CREATE POLICY "Anonymous users can insert videos" ON videos
-  FOR INSERT WITH CHECK (true);
-
--- 授予访问权限
-GRANT SELECT ON videos TO anon;
-GRANT INSERT ON videos TO anon;
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
 ```
 
-## 设置存储桶权限
-
-为了让前端应用能够上传文件到存储桶，您需要设置存储桶的RLS策略：
-
-### 1. 配置 `music` 存储桶
-
-1. 在Supabase控制台中，进入 `Storage` -> `Buckets`
-2. 点击 `music` 存储桶
-3. 点击 `Settings` 选项卡
-4. 在 `Policies` 部分，确保有以下策略：
-   - 选择对象：`Allow anyone to read objects`
-   - 插入对象：`Allow anyone to upload objects`
-
-或者使用SQL配置：
-
+### 为 musics 表设置策略
 ```sql
--- 为music存储桶设置RLS策略
-CREATE POLICY "允许公开读取音乐文件" ON storage.objects 
-FOR SELECT TO anon 
-USING (bucket_id = 'music');
+-- 允许任何人查看音乐
+CREATE POLICY "Music is viewable by everyone" ON musics FOR SELECT USING (true);
 
-CREATE POLICY "允许匿名用户上传音乐文件" ON storage.objects 
-FOR INSERT TO anon 
-WITH CHECK (bucket_id = 'music');
+-- 允许认证用户插入音乐
+CREATE POLICY "Authenticated users can insert music" ON musics FOR INSERT TO authenticated WITH CHECK (true);
+
+-- 授予相关权限
+GRANT SELECT ON TABLE musics TO anon, authenticated;
+GRANT INSERT ON TABLE musics TO authenticated;
 ```
 
-### 2. 配置 `videos` 存储桶
-
-1. 在Supabase控制台中，进入 `Storage` -> `Buckets`
-2. 点击 `videos` 存储桶
-3. 点击 `Settings` 选项卡
-4. 在 `Policies` 部分，确保有以下策略：
-   - 选择对象：`Allow anyone to read objects`
-   - 插入对象：`Allow anyone to upload objects`
-
-或者使用SQL配置：
-
+### 为 videos 表设置策略
 ```sql
--- 为videos存储桶设置RLS策略
-CREATE POLICY "允许公开读取视频文件" ON storage.objects 
-FOR SELECT TO anon 
-USING (bucket_id = 'videos');
+-- 允许任何人查看视频
+CREATE POLICY "Videos are viewable by everyone" ON videos FOR SELECT USING (true);
 
-CREATE POLICY "允许匿名用户上传视频文件" ON storage.objects 
-FOR INSERT TO anon 
-WITH CHECK (bucket_id = 'videos');
+-- 允许认证用户插入视频
+CREATE POLICY "Authenticated users can insert videos" ON videos FOR INSERT TO authenticated WITH CHECK (true);
+
+-- 授予相关权限
+GRANT SELECT ON TABLE videos TO anon, authenticated;
+GRANT INSERT ON TABLE videos TO authenticated;
 ```
 
-## 验证表结构
-
-创建表后，您可以使用以下 SQL 查询来验证表结构：
-
+### 为 admins 表设置策略
 ```sql
--- 检查 musics 表结构
-\d musics;
+-- 允许任何人查看管理员列表
+CREATE POLICY "Admins are viewable by everyone" ON admins FOR SELECT USING (true);
 
--- 检查 videos 表结构
-\d videos;
+-- 允许管理员插入新管理员
+CREATE POLICY "Admins can be inserted by admins" ON admins FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 允许管理员删除管理员
+CREATE POLICY "Admins can be deleted by admins" ON admins FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM admins a WHERE a.email = (SELECT au.email FROM auth.users au WHERE au.id = auth.uid())
+  )
+);
+
+-- 授予相关权限
+GRANT SELECT ON TABLE admins TO anon;
+GRANT INSERT, DELETE ON TABLE admins TO authenticated;
 ```
 
-## 测试数据插入
+## 存储桶策略
 
-您可以使用以下 SQL 语句测试数据插入：
+### 为存储桶设置RLS策略
+```sql
+-- 允许匿名用户上传音乐文件
+CREATE POLICY "Anonymous users can upload music" ON storage.objects 
+FOR INSERT TO anon WITH CHECK (bucket_id = 'music');
+
+-- 允许匿名用户查看音乐文件
+CREATE POLICY "Public music files are viewable" ON storage.objects 
+FOR SELECT TO anon USING (bucket_id = 'music');
+
+-- 允许匿名用户上传视频文件
+CREATE POLICY "Anonymous users can upload videos" ON storage.objects 
+FOR INSERT TO anon WITH CHECK (bucket_id = 'videos');
+
+-- 允许匿名用户查看视频文件
+CREATE POLICY "Public video files are viewable" ON storage.objects 
+FOR SELECT TO anon USING (bucket_id = 'videos');
+
+-- 允许匿名用户上传图片文件
+CREATE POLICY "Anonymous users can upload images" ON storage.objects 
+FOR INSERT TO anon WITH CHECK (bucket_id = 'images');
+
+-- 允许匿名用户查看图片文件
+CREATE POLICY "Public image files are viewable" ON storage.objects 
+FOR SELECT TO anon USING (bucket_id = 'images');
+```
+
+## 权限授予
 
 ```sql
--- 插入测试音乐数据
-INSERT INTO musics (title, album, year, url) 
-VALUES ('测试歌曲', '测试专辑', 2023, 'https://example.com/music.mp3');
+-- 授予 anon 和 authenticated 用户对表的访问权限
+GRANT SELECT ON TABLE musics TO anon, authenticated;
+GRANT INSERT ON TABLE musics TO authenticated;
 
--- 插入测试视频数据
-INSERT INTO videos (title, description, url) 
-VALUES ('测试视频', '这是一个测试视频', 'https://example.com/video.mp4');
+GRANT SELECT ON TABLE videos TO anon, authenticated;
+GRANT INSERT ON TABLE videos TO authenticated;
+
+GRANT SELECT ON TABLE admins TO anon;
+GRANT INSERT, DELETE ON TABLE admins TO authenticated;
 ```
 
 ## 验证RLS策略

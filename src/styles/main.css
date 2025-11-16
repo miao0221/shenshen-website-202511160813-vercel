@@ -271,6 +271,17 @@ body {
     background: rgba(26, 26, 74, 0.6);
     padding: 2rem;
     border-radius: 8px;
+    text-align: center;
+}
+
+.login-form h2 {
+    color: #64c8ff;
+    margin-bottom: 1rem;
+}
+
+.login-form p {
+    margin-bottom: 1.5rem;
+    color: #cceeff;
 }
 
 .error-message {
@@ -290,6 +301,18 @@ body {
 
 #upload-status .error {
     color: #ff6b6b;
+}
+
+.admin-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.admin-list li {
+    padding: 0.5rem;
+    background: rgba(100, 200, 255, 0.1);
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
 }
 
 /* 登录注册页面样式 */
