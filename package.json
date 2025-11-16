@@ -1,0 +1,16 @@
+{
+  "name": "shenshen-fans-website",
+  "version": "1.0.0",
+  "description": "周深粉丝网站 - 第四版",
+  "main": "index.html",
+  "scripts": {
+    "dev": "live-server --port=3000",
+    "start": "npm run dev"
+  },
+  "keywords": ["zhou-shen", "fans-website", "spa"],
+  "author": "Shen Shen Fans",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
