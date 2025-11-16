@@ -92,6 +92,7 @@ class Router {
         const userLinks = document.getElementById('user-links');
         const welcomeText = document.getElementById('welcome-text');
         const logoutBtn = document.getElementById('logout-btn');
+        const adminNavItem = document.getElementById('admin-nav-item');
         
         if (session) {
             // 用户已登录
@@ -109,6 +110,12 @@ class Router {
                     welcomeText.textContent = `欢迎, ${userEmail}`;
                     userLinks.style.display = 'flex';
                     userLinks.style.alignItems = 'center';
+                }
+                
+                // 检查是否为管理员并显示管理员中心链接
+                if (adminNavItem) {
+                    const isAdmin = await this.checkIfAdmin(userEmail);
+                    adminNavItem.style.display = isAdmin ? 'list-item' : 'none';
                 }
                 
                 // 设置退出按钮事件
@@ -131,6 +138,32 @@ class Router {
             if (userLinks) {
                 userLinks.style.display = 'none';
             }
+            
+            // 隐藏管理员中心链接
+            if (adminNavItem) {
+                adminNavItem.style.display = 'none';
+            }
+        }
+    }
+    
+    // 检查用户是否为管理员
+    async checkIfAdmin(email) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('admins')
+                .select('id')
+                .eq('email', email)
+                .single();
+            
+            if (error && error.code !== 'PGRST116') { // PGRST116表示未找到记录
+                console.error('检查管理员权限时出错:', error);
+                return false;
+            }
+            
+            return !!data;
+        } catch (error) {
+            console.error('检查管理员权限时出错:', error);
+            return false;
         }
     }
     

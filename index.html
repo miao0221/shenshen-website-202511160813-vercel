@@ -21,7 +21,8 @@
                 <li class="nav-item">
                     <a href="#/video" class="nav-link" data-route="/video">视频</a>
                 </li>
-                <li class="nav-item">
+                <!-- 管理员中心链接，默认隐藏 -->
+                <li class="nav-item" id="admin-nav-item" style="display: none;">
                     <a href="#/admin" class="nav-link" data-route="/admin" id="admin-link">管理员中心</a>
                 </li>
                 <!-- 认证相关链接 -->
@@ -63,6 +64,7 @@
             const userLinks = document.getElementById('user-links');
             const welcomeText = document.getElementById('welcome-text');
             const logoutBtn = document.getElementById('logout-btn');
+            const adminNavItem = document.getElementById('admin-nav-item');
             
             if (session) {
                 // 用户已登录
@@ -80,6 +82,12 @@
                         welcomeText.textContent = `欢迎, ${userEmail}`;
                         userLinks.style.display = 'flex';
                         userLinks.style.alignItems = 'center';
+                    }
+                    
+                    // 检查是否为管理员并显示管理员中心链接
+                    if (adminNavItem) {
+                        const isAdmin = await checkIfAdmin(userEmail);
+                        adminNavItem.style.display = isAdmin ? 'list-item' : 'none';
                     }
                     
                     // 设置退出按钮事件
@@ -100,6 +108,32 @@
                 if (userLinks) {
                     userLinks.style.display = 'none';
                 }
+                
+                // 隐藏管理员中心链接
+                if (adminNavItem) {
+                    adminNavItem.style.display = 'none';
+                }
+            }
+        }
+        
+        // 检查用户是否为管理员
+        async function checkIfAdmin(email) {
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('admins')
+                    .select('id')
+                    .eq('email', email)
+                    .single();
+                
+                if (error && error.code !== 'PGRST116') { // PGRST116表示未找到记录
+                    console.error('检查管理员权限时出错:', error);
+                    return false;
+                }
+                
+                return !!data;
+            } catch (error) {
+                console.error('检查管理员权限时出错:', error);
+                return false;
             }
         }
         
