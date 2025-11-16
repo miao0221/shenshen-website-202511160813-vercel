@@ -51,6 +51,15 @@ class MusicPage {
     }
 
     afterRender() {
+        // 确保 DOM 已准备好
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.bindEvents());
+        } else {
+            this.bindEvents();
+        }
+    }
+
+    bindEvents() {
         // 绑定筛选事件
         const categorySelect = document.getElementById('music-category');
         if (categorySelect) {
@@ -59,6 +68,15 @@ class MusicPage {
                 // 实际应用中这里会根据分类筛选音乐
             });
         }
+
+        // 绑定所有播放按钮
+        document.querySelectorAll('.play-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const songName = e.currentTarget.closest('.music-card')?.querySelector('h3')?.textContent;
+                console.log('播放歌曲:', songName);
+                // 实际应用中会触发音频播放
+            });
+        });
     }
 }
 

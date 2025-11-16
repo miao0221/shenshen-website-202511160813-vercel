@@ -38,25 +38,49 @@ class LoginPage {
     }
 
     afterRender() {
+        // 清理现有事件（防止重复绑定）
+        this.cleanupEvents();
+
         // 绑定登录表单事件
         const loginForm = document.getElementById('login-form');
         if (loginForm) {
-            loginForm.addEventListener('submit', (e) => {
+            loginForm._submitHandler = (e) => {
                 e.preventDefault();
                 this.handleLogin();
-            });
+            };
+            loginForm.addEventListener('submit', loginForm._submitHandler);
         }
 
-        // 绑定注册链接事件
+        // 绑定所有路由链接事件
+        this.routeLinkHandlers = [];
         document.querySelectorAll('[data-route]').forEach(element => {
-            element.addEventListener('click', (e) => {
+            const handler = (e) => {
                 e.preventDefault();
                 const route = element.getAttribute('data-route');
-                if (window.router) {
+                if (window.router && route) {
                     window.router.navigate(route);
                 }
-            });
+            };
+            element.addEventListener('click', handler);
+            this.routeLinkHandlers.push({ element, handler });
         });
+    }
+
+    cleanupEvents() {
+        // 清理表单事件
+        const loginForm = document.getElementById('login-form');
+        if (loginForm && loginForm._submitHandler) {
+            loginForm.removeEventListener('submit', loginForm._submitHandler);
+            loginForm._submitHandler = null;
+        }
+
+        // 清理链接事件
+        if (this.routeLinkHandlers) {
+            this.routeLinkHandlers.forEach(({ element, handler }) => {
+                element.removeEventListener('click', handler);
+            });
+            this.routeLinkHandlers = [];
+        }
     }
 
     async handleLogin() {
@@ -89,4 +113,18 @@ class LoginPage {
     }
 }
 
-export default new LoginPage();
+// 在导出前确保清理
+const loginPage = new LoginPage();
+
+// 保存原始的render方法
+const originalRender = loginPage.render;
+
+// 重写render方法，确保每次渲染前清理事件
+loginPage.render = function() {
+    if (this.cleanupEvents) {
+        this.cleanupEvents();
+    }
+    return originalRender.call(this);
+};
+
+export default loginPage;

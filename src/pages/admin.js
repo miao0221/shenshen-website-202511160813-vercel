@@ -124,8 +124,9 @@ class AdminPage {
     }
 
     afterRender() {
-        // 绑定标签页切换事件
-        document.querySelectorAll('.tab-button').forEach(button => {
+        // 确保方法绑定正确的 this 上下文
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
             button.addEventListener('click', (e) => {
                 const tab = e.target.getAttribute('data-tab');
                 this.switchTab(tab);

@@ -1,6 +1,5 @@
 import { router } from './routes/router.js';
 import { initSupabase } from './utils/supabaseClient.js';
-import './assets/css/main.css';
 
 // 将路由器实例添加到全局window对象
 window.router = router;
