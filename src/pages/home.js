@@ -45,7 +45,9 @@ class HomePage {
             button.addEventListener('click', (e) => {
                 e.preventDefault();
                 const route = button.getAttribute('data-route');
-                window.router.navigate(route);
+                if (window.router) {
+                    window.router.navigate(route);
+                }
             });
         });
     }

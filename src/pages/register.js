@@ -63,7 +63,9 @@ class RegisterPage {
             element.addEventListener('click', (e) => {
                 e.preventDefault();
                 const route = element.getAttribute('data-route');
-                window.router.navigate(route);
+                if (window.router) {
+                    window.router.navigate(route);
+                }
             });
         });
     }
@@ -100,7 +102,9 @@ class RegisterPage {
             
             // 注册成功后跳转到登录页
             alert('注册成功，请登录!');
-            window.router.navigate('/login');
+            if (window.router) {
+                window.router.navigate('/login');
+            }
         } catch (error) {
             console.error('注册失败:', error);
             alert('注册失败，请稍后再试');

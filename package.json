@@ -4,9 +4,9 @@
   "description": "周深粉丝网站第四版",
   "main": "index.js",
   "scripts": {
-    "start": "live-server --port=3000",
+    "dev": "webpack serve --mode development --open",
     "build": "webpack --mode production",
-    "dev": "webpack serve --mode development --open"
+    "preview": "npm run build && live-server --port=3000 --entry-file=./dist/index.html ./dist"
   },
   "keywords": [
     "zhoushen",

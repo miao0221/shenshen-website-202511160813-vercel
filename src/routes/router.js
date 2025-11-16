@@ -22,8 +22,33 @@ class Router {
     init() {
         console.log('初始化路由器...');
         
-        // 绑定导航链接事件
+        // 确保DOM加载完成后再绑定事件
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.bindNavigationEvents();
+            });
+        } else {
+            // DOM已经加载完成
+            this.bindNavigationEvents();
+        }
+
+        // 处理浏览器前进后退按钮
+        window.addEventListener('popstate', () => {
+            this.navigate(window.location.pathname);
+        });
+
+        // 加载初始页面
+        const initialRoute = window.location.pathname === '/' ? DEFAULT_ROUTE : window.location.pathname;
+        this.navigate(initialRoute, false);
+    }
+
+    /**
+     * 绑定导航事件
+     */
+    bindNavigationEvents() {
+        // 使用事件委托，绑定到document上
         document.addEventListener('click', (e) => {
+            // 检查点击的元素或其父元素是否有data-route属性
             const navLink = e.target.closest('[data-route]');
             if (navLink) {
                 e.preventDefault();
@@ -31,10 +56,6 @@ class Router {
                 this.navigate(route);
             }
         });
-
-        // 加载初始页面
-        const initialRoute = window.location.pathname === '/' ? DEFAULT_ROUTE : window.location.pathname;
-        this.navigate(initialRoute, false);
     }
 
     /**
@@ -67,7 +88,10 @@ class Router {
                 
                 // 如果页面有afterRender方法，则执行
                 if (typeof page.afterRender === 'function') {
-                    page.afterRender();
+                    // 使用setTimeout确保DOM更新完成后再执行afterRender
+                    setTimeout(() => {
+                        page.afterRender();
+                    }, 0);
                 }
             } else {
                 throw new Error(`页面模块格式错误: ${path}`);
@@ -77,6 +101,9 @@ class Router {
             if (addToHistory) {
                 window.history.pushState({}, '', path);
             }
+            
+            // 更新导航链接激活状态
+            this.updateActiveLinks(path);
         } catch (error) {
             console.error('路由导航出错:', error);
             const pageContainer = document.getElementById('page-container');
@@ -103,7 +130,27 @@ class Router {
             }
         }
     }
+    
+    /**
+     * 更新导航链接的激活状态
+     * @param {string} path - 当前路径
+     */
+    updateActiveLinks(path) {
+        // 移除所有激活状态
+        document.querySelectorAll('[data-route]').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // 为当前路径添加激活状态
+        const activeLink = document.querySelector(`[data-route="${path}"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+        }
+    }
 }
 
 // 导出路由器实例
 export const router = new Router();
+
+// 将路由器实例添加到全局window对象，方便在其他地方使用
+window.router = router;

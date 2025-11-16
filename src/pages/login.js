@@ -52,7 +52,9 @@ class LoginPage {
             element.addEventListener('click', (e) => {
                 e.preventDefault();
                 const route = element.getAttribute('data-route');
-                window.router.navigate(route);
+                if (window.router) {
+                    window.router.navigate(route);
+                }
             });
         });
     }
@@ -77,7 +79,9 @@ class LoginPage {
             
             // 登录成功后跳转到主页
             alert('登录成功!');
-            window.router.navigate('/');
+            if (window.router) {
+                window.router.navigate('/');
+            }
         } catch (error) {
             console.error('登录失败:', error);
             alert('登录失败，请检查邮箱和密码是否正确');

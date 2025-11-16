@@ -10,7 +10,8 @@ module.exports = (env, argv) => {
         output: {
             path: path.resolve(__dirname, 'dist'),
             filename: isProduction ? '[name].[contenthash].js' : '[name].js',
-            clean: true
+            clean: true,
+            publicPath: '/'
         },
         
         devServer: {
@@ -19,7 +20,10 @@ module.exports = (env, argv) => {
             },
             compress: true,
             port: 3000,
-            historyApiFallback: true
+            historyApiFallback: {
+                index: '/index.html'
+            },
+            open: true
         },
         
         module: {
