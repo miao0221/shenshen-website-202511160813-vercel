@@ -1,7 +1,6 @@
 import { isAdmin, addAdmin, removeAdmin, getAdmins } from '../utils/admin.js';
 
 // 管理员页面模块
-let isAuthenticated = false;
 
 export function renderAdminPage() {
     // 直接返回管理界面，认证检查在setupAdminPage中进行
@@ -12,13 +11,15 @@ export function renderAdminPage() {
             </div>
             
             <div class="admin-tabs">
-                <button class="tab-btn active" data-tab="music">音乐上传</button>
-                <button class="tab-btn" data-tab="video">视频上传</button>
+                <button class="tab-btn" data-tab="music-upload">音乐上传</button>
+                <button class="tab-btn" data-tab="video-upload">视频上传</button>
+                <button class="tab-btn" data-tab="manage-music">音乐管理</button>
+                <button class="tab-btn" data-tab="manage-videos">视频管理</button>
                 <button class="tab-btn" data-tab="admins">管理员管理</button>
             </div>
             
             <div class="tab-content">
-                <div id="music-tab" class="tab-pane active">
+                <div id="music-upload-tab" class="tab-pane" style="display: none;">
                     <h3>上传音乐</h3>
                     <form id="music-form" class="admin-form">
                         <div class="form-group">
@@ -45,7 +46,7 @@ export function renderAdminPage() {
                     </form>
                 </div>
                 
-                <div id="video-tab" class="tab-pane" style="display: none;">
+                <div id="video-upload-tab" class="tab-pane" style="display: none;">
                     <h3>上传视频</h3>
                     <form id="video-form" class="admin-form">
                         <div class="form-group">
@@ -67,6 +68,20 @@ export function renderAdminPage() {
                     </form>
                 </div>
                 
+                <div id="manage-music-tab" class="tab-pane" style="display: none;">
+                    <h3>管理音乐作品</h3>
+                    <div id="music-list-container">
+                        <p>加载中...</p>
+                    </div>
+                </div>
+                
+                <div id="manage-videos-tab" class="tab-pane" style="display: none;">
+                    <h3>管理视频作品</h3>
+                    <div id="video-list-container">
+                        <p>加载中...</p>
+                    </div>
+                </div>
+                
                 <div id="admins-tab" class="tab-pane" style="display: none;">
                     <h3>管理员管理</h3>
                     <div class="admin-form">
@@ -85,6 +100,50 @@ export function renderAdminPage() {
             </div>
             
             <div id="upload-status"></div>
+            
+            <!-- 编辑音乐模态框 -->
+            <div id="edit-music-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>编辑音乐信息</h3>
+                    <form id="edit-music-form">
+                        <input type="hidden" id="edit-music-id">
+                        <div class="form-group">
+                            <label for="edit-music-title">歌曲标题:</label>
+                            <input type="text" id="edit-music-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-music-album">专辑:</label>
+                            <input type="text" id="edit-music-album" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-music-year">年份:</label>
+                            <input type="number" id="edit-music-year" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存更改</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 编辑视频模态框 -->
+            <div id="edit-video-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>编辑视频信息</h3>
+                    <form id="edit-video-form">
+                        <input type="hidden" id="edit-video-id">
+                        <div class="form-group">
+                            <label for="edit-video-title">视频标题:</label>
+                            <input type="text" id="edit-video-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-video-description">描述:</label>
+                            <textarea id="edit-video-description" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存更改</button>
+                    </form>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -137,6 +196,26 @@ export async function setupAdminPage() {
             }
             return;
         }
+        
+        // 显示第一个标签页
+        const firstTab = document.querySelector('.tab-btn');
+        if (firstTab) {
+            firstTab.classList.add('active');
+            const tabName = firstTab.getAttribute('data-tab');
+            const targetPane = document.getElementById(tabName + '-tab');
+            if (targetPane) {
+                targetPane.style.display = 'block';
+                
+                // 如果是管理标签，加载内容
+                if (tabName === 'manage-music') {
+                    loadMusicList();
+                } else if (tabName === 'manage-videos') {
+                    loadVideoList();
+                } else if (tabName === 'admins') {
+                    loadAdmins();
+                }
+            }
+        }
     } catch (error) {
         console.error('检查认证状态时出错:', error);
     }
@@ -161,8 +240,12 @@ export async function setupAdminPage() {
             if (targetPane) {
                 targetPane.style.display = 'block';
                 
-                // 如果是管理员标签，加载管理员列表
-                if (tabName === 'admins') {
+                // 根据标签加载相应内容
+                if (tabName === 'manage-music') {
+                    loadMusicList();
+                } else if (tabName === 'manage-videos') {
+                    loadVideoList();
+                } else if (tabName === 'admins') {
                     loadAdmins();
                 }
             }
@@ -187,6 +270,20 @@ export async function setupAdminPage() {
         if (addAdminBtn) {
             addAdminBtn.addEventListener('click', handleAddAdmin);
         }
+        
+        // 设置编辑表单事件
+        const editMusicForm = document.getElementById('edit-music-form');
+        if (editMusicForm) {
+            editMusicForm.addEventListener('submit', handleEditMusic);
+        }
+        
+        const editVideoForm = document.getElementById('edit-video-form');
+        if (editVideoForm) {
+            editVideoForm.addEventListener('submit', handleEditVideo);
+        }
+        
+        // 设置模态框关闭事件
+        setupModalEvents();
     }
 }
 
@@ -227,11 +324,14 @@ async function handleMusicUpload(e) {
         
         statusDiv.innerHTML = '<p class="success">音乐上传成功!</p>';
         
+        // 发送自定义事件通知音乐页面更新
+        window.dispatchEvent(new CustomEvent('musicUploaded'));
+        
         // 重置表单
         document.getElementById('music-form').reset();
     } catch (error) {
         console.error('上传音乐时出错:', error);
-        statusDiv.innerHTML = '<p class="error">上传失败: ${error.message}</p>';
+        statusDiv.innerHTML = '<p class="error">上传失败: ' + error.message + '</p>';
     }
 }
 
@@ -271,11 +371,14 @@ async function handleVideoUpload(e) {
         
         statusDiv.innerHTML = '<p class="success">视频上传成功!</p>';
         
+        // 发送自定义事件通知视频页面更新
+        window.dispatchEvent(new CustomEvent('videoUploaded'));
+        
         // 重置表单
         document.getElementById('video-form').reset();
     } catch (error) {
         console.error('上传视频时出错:', error);
-        statusDiv.innerHTML = '<p class="error">上传失败: ${error.message}</p>';
+        statusDiv.innerHTML = '<p class="error">上传失败: ' + error.message + '</p>';
     }
 }
 
@@ -335,6 +438,282 @@ async function loadAdmins() {
     }
 }
 
+// 加载音乐列表
+async function loadMusicList() {
+    try {
+        const { data: musics, error } = await window.supabaseClient
+            .from('musics')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            throw error;
+        }
+        
+        const container = document.getElementById('music-list-container');
+        if (!container) return;
+        
+        if (musics.length === 0) {
+            container.innerHTML = '<p>暂无音乐作品</p>';
+            return;
+        }
+        
+        let musicListHTML = '<div class="media-list">';
+        musics.forEach(music => {
+            musicListHTML += `
+                <div class="media-card admin-media-card" data-id="${music.id}">
+                    <div class="media-info">
+                        <h3>${music.title}</h3>
+                        <p>专辑: ${music.album}</p>
+                        <p>年份: ${music.year}</p>
+                        <div class="admin-actions">
+                            <button class="btn btn-secondary edit-music-btn" data-id="${music.id}">编辑</button>
+                            <button class="btn btn-danger delete-music-btn" data-id="${music.id}">删除</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        musicListHTML += '</div>';
+        
+        container.innerHTML = musicListHTML;
+        
+        // 添加编辑和删除按钮事件
+        document.querySelectorAll('.edit-music-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.getAttribute('data-id');
+                const music = musics.find(m => m.id == id);
+                openEditMusicModal(music);
+            });
+        });
+        
+        document.querySelectorAll('.delete-music-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.getAttribute('data-id');
+                const music = musics.find(m => m.id == id);
+                if (confirm(`确定要删除音乐 "${music.title}" 吗？`)) {
+                    deleteMusic(id);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('加载音乐列表时出错:', error);
+        const container = document.getElementById('music-list-container');
+        if (container) {
+            container.innerHTML = '<p>加载音乐列表时出错: ' + error.message + '</p>';
+        }
+    }
+}
+
+// 加载视频列表
+async function loadVideoList() {
+    try {
+        const { data: videos, error } = await window.supabaseClient
+            .from('videos')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            throw error;
+        }
+        
+        const container = document.getElementById('video-list-container');
+        if (!container) return;
+        
+        if (videos.length === 0) {
+            container.innerHTML = '<p>暂无视频作品</p>';
+            return;
+        }
+        
+        let videoListHTML = '<div class="media-list">';
+        videos.forEach(video => {
+            videoListHTML += `
+                <div class="media-card admin-media-card" data-id="${video.id}">
+                    <div class="media-info">
+                        <h3>${video.title}</h3>
+                        <p>${video.description}</p>
+                        <div class="admin-actions">
+                            <button class="btn btn-secondary edit-video-btn" data-id="${video.id}">编辑</button>
+                            <button class="btn btn-danger delete-video-btn" data-id="${video.id}">删除</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        videoListHTML += '</div>';
+        
+        container.innerHTML = videoListHTML;
+        
+        // 添加编辑和删除按钮事件
+        document.querySelectorAll('.edit-video-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.getAttribute('data-id');
+                const video = videos.find(v => v.id == id);
+                openEditVideoModal(video);
+            });
+        });
+        
+        document.querySelectorAll('.delete-video-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.getAttribute('data-id');
+                const video = videos.find(v => v.id == id);
+                if (confirm(`确定要删除视频 "${video.title}" 吗？`)) {
+                    deleteVideo(id);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('加载视频列表时出错:', error);
+        const container = document.getElementById('video-list-container');
+        if (container) {
+            container.innerHTML = '<p>加载视频列表时出错: ' + error.message + '</p>';
+        }
+    }
+}
+
+// 打开编辑音乐模态框
+function openEditMusicModal(music) {
+    document.getElementById('edit-music-id').value = music.id;
+    document.getElementById('edit-music-title').value = music.title;
+    document.getElementById('edit-music-album').value = music.album;
+    document.getElementById('edit-music-year').value = music.year;
+    
+    document.getElementById('edit-music-modal').style.display = 'block';
+}
+
+// 打开编辑视频模态框
+function openEditVideoModal(video) {
+    document.getElementById('edit-video-id').value = video.id;
+    document.getElementById('edit-video-title').value = video.title;
+    document.getElementById('edit-video-description').value = video.description;
+    
+    document.getElementById('edit-video-modal').style.display = 'block';
+}
+
+// 处理音乐编辑
+async function handleEditMusic(e) {
+    e.preventDefault();
+    
+    try {
+        const id = document.getElementById('edit-music-id').value;
+        const title = document.getElementById('edit-music-title').value;
+        const album = document.getElementById('edit-music-album').value;
+        const year = document.getElementById('edit-music-year').value;
+        
+        const { error } = await window.supabaseClient
+            .from('musics')
+            .update({ title, album, year: parseInt(year) })
+            .eq('id', id);
+        
+        if (error) {
+            throw error;
+        }
+        
+        // 关闭模态框
+        document.getElementById('edit-music-modal').style.display = 'none';
+        
+        // 重新加载音乐列表
+        loadMusicList();
+        
+        alert('音乐信息更新成功');
+    } catch (error) {
+        console.error('更新音乐信息时出错:', error);
+        alert('更新音乐信息时出错: ' + error.message);
+    }
+}
+
+// 处理视频编辑
+async function handleEditVideo(e) {
+    e.preventDefault();
+    
+    try {
+        const id = document.getElementById('edit-video-id').value;
+        const title = document.getElementById('edit-video-title').value;
+        const description = document.getElementById('edit-video-description').value;
+        
+        const { error } = await window.supabaseClient
+            .from('videos')
+            .update({ title, description })
+            .eq('id', id);
+        
+        if (error) {
+            throw error;
+        }
+        
+        // 关闭模态框
+        document.getElementById('edit-video-modal').style.display = 'none';
+        
+        // 重新加载视频列表
+        loadVideoList();
+        
+        alert('视频信息更新成功');
+    } catch (error) {
+        console.error('更新视频信息时出错:', error);
+        alert('更新视频信息时出错: ' + error.message);
+    }
+}
+
+// 删除音乐
+async function deleteMusic(id) {
+    try {
+        const { error } = await window.supabaseClient
+            .from('musics')
+            .delete()
+            .eq('id', id);
+        
+        if (error) {
+            throw error;
+        }
+        
+        // 重新加载音乐列表
+        loadMusicList();
+        
+        alert('音乐删除成功');
+    } catch (error) {
+        console.error('删除音乐时出错:', error);
+        alert('删除音乐时出错: ' + error.message);
+    }
+}
+
+// 删除视频
+async function deleteVideo(id) {
+    try {
+        const { error } = await window.supabaseClient
+            .from('videos')
+            .delete()
+            .eq('id', id);
+        
+        if (error) {
+            throw error;
+        }
+        
+        // 重新加载视频列表
+        loadVideoList();
+        
+        alert('视频删除成功');
+    } catch (error) {
+        console.error('删除视频时出错:', error);
+        alert('删除视频时出错: ' + error.message);
+    }
+}
+
+// 设置模态框事件
+function setupModalEvents() {
+    // 关闭模态框事件
+    document.querySelectorAll('.modal .close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', () => {
+            closeBtn.closest('.modal').style.display = 'none';
+        });
+    });
+    
+    // 点击模态框外部关闭
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            e.target.style.display = 'none';
+        }
+    });
+}
+
 // 上传文件到 Supabase 存储
 async function uploadFileToSupabase(file, bucket, fileName) {
     return new Promise((resolve, reject) => {
@@ -348,7 +727,7 @@ async function uploadFileToSupabase(file, bucket, fileName) {
             .then(({ data, error }) => {
                 if (error) {
                     console.error('文件上传错误:', error);
-                    reject(new Error('上传失败: ${error.message}'));
+                    reject(new Error('上传失败: ' + error.message));
                     return;
                 }
                 
@@ -377,7 +756,7 @@ async function saveMusicInfo(musicData) {
             .then(({ data, error }) => {
                 if (error) {
                     console.error('保存音乐信息错误:', error);
-                    reject(new Error('保存音乐信息失败: ${error.message}'));
+                    reject(new Error('保存音乐信息失败: ' + error.message));
                     return;
                 }
                 
@@ -400,7 +779,7 @@ async function saveVideoInfo(videoData) {
             .then(({ data, error }) => {
                 if (error) {
                     console.error('保存视频信息错误:', error);
-                    reject(new Error('保存视频信息失败: ${error.message}'));
+                    reject(new Error('保存视频信息失败: ' + error.message));
                     return;
                 }
                 

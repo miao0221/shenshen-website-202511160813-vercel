@@ -52,6 +52,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         router.handleRoute();
     });
 
+    // 监听音乐上传事件并更新音乐页面
+    window.addEventListener('musicUploaded', async () => {
+        // 如果当前在音乐页面，则刷新页面内容
+        if (window.location.hash === '#/music') {
+            const appElement = document.getElementById('app');
+            if (appElement) {
+                appElement.innerHTML = await renderMusicPage();
+            }
+        }
+    });
+
+    // 监听视频上传事件并更新视频页面
+    window.addEventListener('videoUploaded', async () => {
+        // 如果当前在视频页面，则刷新页面内容
+        if (window.location.hash === '#/video') {
+            const appElement = document.getElementById('app');
+            if (appElement) {
+                appElement.innerHTML = await renderVideoPage();
+            }
+        }
+    });
+
     // 初始化当前路由
     await router.handleRoute();
 });
