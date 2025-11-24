@@ -910,7 +910,7 @@ body {
 
 .timeline-wrapper {
     position: relative;
-    height: 200px;
+    height: 0px;
     /* 移除滚动条 */
     overflow-x: hidden;
     overflow-y: visible;
@@ -928,7 +928,8 @@ body {
     max-width: none;
     margin-left: 0;
     margin-right: 0;
-    padding: 0;
+    /* 修改：将垂直内边距增加一倍，确保三角形指示器的发光效果完全可见 */
+    padding: 120px 0;
     /* 确保容器具有适当的z-index */
     z-index: 10;
     /* 确保容器不会裁剪指示器，但允许音符正常显示 */
@@ -1015,7 +1016,9 @@ body {
     border-right: 15px solid transparent;
     border-top: 25px solid #FFD700;
     z-index: 999;
-    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.8));
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.9))
+            drop-shadow(0 0 12px rgba(255, 215, 0, 0.7))
+            drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
     /* 修改：只为三角形指示器使用垂直浮动动画，而不是通用的float动画 */
     animation: triangleFloat 2s ease-in-out infinite, breathe 2s ease-in-out infinite;
     /* 确保指示器可见 */
@@ -1191,6 +1194,160 @@ body {
     display: none;
 }
 
+/* 可折叠操作台样式 */
+.control-panel {
+    background: rgba(26, 26, 74, 0.8);
+    border-radius: 10px;
+    margin: 20px auto;
+    max-width: 1200px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    z-index: 20;
+}
+
+.control-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(10, 10, 42, 0.9);
+    cursor: pointer;
+    user-select: none;
+}
+
+.control-panel-header span {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #64c8ff;
+}
+
+.toggle-panel-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-panel.collapsed .toggle-panel-btn {
+    transform: rotate(180deg);
+}
+
+.control-panel-content {
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.control-panel.collapsed .control-panel-content {
+    display: none;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.control-group label {
+    color: #cceeff;
+    width: 120px;
+    font-size: 1rem;
+    margin-right: 15px;
+}
+
+.control-group input[type="range"] {
+    flex: 1;
+    min-width: 200px;
+    margin-right: 15px;
+    height: 6px;
+    -webkit-appearance: none;
+    background: rgba(100, 200, 255, 0.2);
+    border-radius: 3px;
+    outline: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #64c8ff;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(100, 200, 255, 0.5);
+}
+
+.control-group span {
+    color: #64c8ff;
+    font-weight: bold;
+    min-width: 50px;
+    text-align: center;
+}
+
+.control-group button {
+    background: rgba(100, 200, 255, 0.2);
+    color: #64c8ff;
+    border: 1px solid rgba(100, 200, 255, 0.5);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+.control-group button:hover {
+    background: rgba(100, 200, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+/* 重置按钮样式 */
+#reset-controls {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#reset-controls:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(45deg, #ff5252, #ff7b7b);
+}
+
+/* 确认保存按钮样式 */
+#save-controls {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    margin-left: 10px;
+}
+
+#save-controls:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(45deg, #45a049, #3d8b40);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
     .page-container {
@@ -1263,5 +1420,21 @@ body {
     
     .content-section p {
         font-size: 1rem;
+    }
+    
+    .control-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .control-group label {
+        margin-bottom: 8px;
+        width: 100%;
+    }
+    
+    .control-group input[type="range"] {
+        min-width: 100%;
+        margin-right: 0;
+        margin-bottom: 8px;
     }
 }

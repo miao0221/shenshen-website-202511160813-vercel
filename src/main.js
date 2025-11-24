@@ -67,8 +67,9 @@ router.register('/video', async () => {
     return content;
 });
 
-router.register('/time-capsule', () => {
-    return renderTimeCapsulePage();
+router.register('/time-capsule', async () => {
+    const html = await renderTimeCapsulePage();
+    return html;
 });
 
 router.register('/honor-wall', () => {

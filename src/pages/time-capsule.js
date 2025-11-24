@@ -1,8 +1,49 @@
-export function renderTimeCapsulePage() {
+import { isAdmin } from '../utils/admin.js';
+
+export async function renderTimeCapsulePage() {
+    // 检查用户是否为管理员
+    const userIsAdmin = await isAdmin();
+    
     return `
         <div class="page-container time-capsule-page">
             <h2>时间胶囊</h2>
             <p>这里记录着周深音乐旅程中的重要时刻和珍贵回忆。</p>
+            
+            <!-- 添加可折叠操作台 (仅管理员可见) -->
+            ${userIsAdmin ? `
+            <div class="control-panel">
+                <div class="control-panel-header">
+                    <span>操作台</span>
+                    <button class="toggle-panel-btn">﹀</button>
+                </div>
+                <div class="control-panel-content">
+                    <div class="control-group">
+                        <label for="timeline-height">五线谱高度:</label>
+                        <input type="range" id="timeline-height" min="20" max="300" value="150">
+                        <span id="height-value">150px</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="note-size">音符大小:</label>
+                        <input type="range" id="note-size" min="20" max="200" value="88">
+                        <span id="size-value">88px</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="note-spacing">音符间距:</label>
+                        <input type="range" id="note-spacing" min="50" max="300" value="132">
+                        <span id="spacing-value">132px</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="line-spacing">线间距:</label>
+                        <input type="range" id="line-spacing" min="10" max="100" value="20">
+                        <span id="line-spacing-value">20%</span>
+                    </div>
+                    <div class="control-group">
+                        <button id="reset-controls">重置</button>
+                        <button id="save-controls">确认保存</button>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
             
             <div class="timeline-container">
                 <div class="timeline-wrapper">
@@ -815,12 +856,243 @@ class Calendar {
 }
 
 // 初始化时间轴和日历功能
-export function initTimeCapsuleFeatures() {
+export async function initTimeCapsuleFeatures() {
     // 创建时间轴
     const timeline = new Timeline();
     
     // 创建日历
     const calendar = new Calendar(timeline);
     
-    return { timeline, calendar };
+    // 标记今天
+    calendar.markToday();
+    
+    // 检查用户是否为管理员，如果是则初始化操作台功能
+    const userIsAdmin = await isAdmin();
+    if (userIsAdmin) {
+        initControlPanel(timeline);
+    }
+    
+    // 将时间轴实例存储到日历中，以便相互调用
+    calendar.timeline = timeline;
+}
+
+// 初始化操作台功能
+function initControlPanel(timeline) {
+    // 获取操作台元素
+    const controlPanel = document.querySelector('.control-panel');
+    const toggleBtn = document.querySelector('.toggle-panel-btn');
+    const timelineWrapper = document.querySelector('.timeline-wrapper');
+    const heightSlider = document.getElementById('timeline-height');
+    const sizeSlider = document.getElementById('note-size');
+    const spacingSlider = document.getElementById('note-spacing');
+    const lineSpacingSlider = document.getElementById('line-spacing');
+    const heightValue = document.getElementById('height-value');
+    const sizeValue = document.getElementById('size-value');
+    const spacingValue = document.getElementById('spacing-value');
+    const lineSpacingValue = document.getElementById('line-spacing-value');
+    const resetBtn = document.getElementById('reset-controls');
+    
+    // 检查元素是否存在
+    if (!controlPanel || !toggleBtn || !timelineWrapper || !heightSlider || !sizeSlider || !spacingSlider || !lineSpacingSlider) {
+        return;
+    }
+    
+    // 切换操作台显示/隐藏
+    toggleBtn.addEventListener('click', () => {
+        controlPanel.classList.toggle('collapsed');
+    });
+    
+    // 初始化高度滑块
+    heightSlider.addEventListener('input', () => {
+        const height = heightSlider.value;
+        timelineWrapper.style.height = height + 'px';
+        heightValue.textContent = height + 'px';
+    });
+    
+    // 初始化大小滑块
+    sizeSlider.addEventListener('input', () => {
+        const size = sizeSlider.value;
+        const timelinePoints = document.querySelectorAll('.timeline-point');
+        timelinePoints.forEach(point => {
+            point.style.width = size + 'px';
+            point.style.height = size + 'px';
+            point.style.fontSize = size + 'px';
+            point.style.lineHeight = size + 'px';
+        });
+        sizeValue.textContent = size + 'px';
+    });
+    
+    // 初始化间距滑块
+    spacingSlider.addEventListener('input', () => {
+        const spacing = spacingSlider.value;
+        if (timeline) {
+            timeline.pointSpacing = parseInt(spacing);
+            timeline.allPointsData = []; // 清空现有数据
+            timeline.generatePointsData(); // 重新生成点数据
+            
+            // 清除现有的所有点元素
+            timeline.pointsContainer.innerHTML = '';
+            timeline.visiblePoints.clear();
+            
+            timeline.renderVisiblePoints(); // 重新渲染可见点
+        }
+        spacingValue.textContent = spacing + 'px';
+    });
+    
+    // 初始化线间距滑块
+    lineSpacingSlider.addEventListener('input', () => {
+        const lineSpacing = lineSpacingSlider.value;
+        const timelineLines = document.querySelectorAll('.timeline-line');
+        const positions = [10, 30, 50, 70, 90]; // 原始位置百分比
+        const centerIndex = 2; // 中间线的索引（从0开始）
+        
+        timelineLines.forEach((line, index) => {
+            if (index === centerIndex) {
+                // 中间线保持固定位置
+                line.style.top = positions[index] + '%';
+            } else {
+                // 计算其他线相对于中间线的位置偏移
+                const offset = positions[index] - positions[centerIndex];
+                const newPosition = positions[centerIndex] + (offset * lineSpacing / 20);
+                line.style.top = newPosition + '%';
+            }
+        });
+        
+        lineSpacingValue.textContent = lineSpacing + '%';
+    });
+    
+    // 重置按钮功能
+    resetBtn.addEventListener('click', () => {
+        // 重置高度滑块
+        heightSlider.value = 150;
+        timelineWrapper.style.height = '150px';
+        heightValue.textContent = '150px';
+        
+        // 重置大小滑块
+        sizeSlider.value = 88;
+        const timelinePoints = document.querySelectorAll('.timeline-point');
+        timelinePoints.forEach(point => {
+            point.style.width = '110px';
+            point.style.height = '110px';
+            point.style.fontSize = '88px';
+            point.style.lineHeight = '110px';
+        });
+        sizeValue.textContent = '88px';
+        
+        // 重置间距滑块
+        spacingSlider.value = 132;
+        if (timeline) {
+            timeline.pointSpacing = 132;
+            timeline.allPointsData = []; // 清空现有数据
+            timeline.generatePointsData(); // 重新生成点数据
+            
+            // 清除现有的所有点元素
+            timeline.pointsContainer.innerHTML = '';
+            timeline.visiblePoints.clear();
+            
+            timeline.renderVisiblePoints(); // 重新渲染可见点
+        }
+        spacingValue.textContent = '132px';
+        
+        // 重置线间距滑块
+        lineSpacingSlider.value = 20;
+        const timelineLines = document.querySelectorAll('.timeline-line');
+        const positions = [10, 30, 50, 70, 90]; // 原始位置百分比
+        const centerIndex = 2; // 中间线的索引（从0开始）
+        
+        timelineLines.forEach((line, index) => {
+            if (index === centerIndex) {
+                // 中间线保持固定位置
+                line.style.top = positions[index] + '%';
+            } else {
+                // 计算其他线相对于中间线的位置偏移
+                const offset = positions[index] - positions[centerIndex];
+                const newPosition = positions[centerIndex] + (offset * 20 / 20);
+                line.style.top = newPosition + '%';
+            }
+        });
+        
+        lineSpacingValue.textContent = '20%';
+    });
+    
+    // 确认保存按钮功能
+    const saveBtn = document.getElementById('save-controls');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            // 获取当前各滑块的值
+            const settings = {
+                timelineHeight: heightSlider.value,
+                noteSize: sizeSlider.value,
+                noteSpacing: spacingSlider.value,
+                lineSpacing: lineSpacingSlider.value
+            };
+            
+            // 保存到localStorage
+            localStorage.setItem('timelineSettings', JSON.stringify(settings));
+            
+            // 显示保存成功的提示
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '已保存!';
+            setTimeout(() => {
+                saveBtn.textContent = originalText;
+            }, 2000);
+        });
+    }
+    
+    // 页面加载时应用保存的设置
+    const savedSettings = localStorage.getItem('timelineSettings');
+    if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        
+        // 应用五线谱高度
+        heightSlider.value = settings.timelineHeight;
+        timelineWrapper.style.height = settings.timelineHeight + 'px';
+        heightValue.textContent = settings.timelineHeight + 'px';
+        
+        // 应用音符大小
+        sizeSlider.value = settings.noteSize;
+        const timelinePoints = document.querySelectorAll('.timeline-point');
+        timelinePoints.forEach(point => {
+            point.style.width = settings.noteSize + 'px';
+            point.style.height = settings.noteSize + 'px';
+            point.style.fontSize = settings.noteSize + 'px';
+            point.style.lineHeight = settings.noteSize + 'px';
+        });
+        sizeValue.textContent = settings.noteSize + 'px';
+        
+        // 应用音符间距
+        spacingSlider.value = settings.noteSpacing;
+        if (timeline) {
+            timeline.pointSpacing = parseInt(settings.noteSpacing);
+            timeline.allPointsData = []; // 清空现有数据
+            timeline.generatePointsData(); // 重新生成点数据
+            
+            // 清除现有的所有点元素
+            timeline.pointsContainer.innerHTML = '';
+            timeline.visiblePoints.clear();
+            
+            timeline.renderVisiblePoints(); // 重新渲染可见点
+        }
+        spacingValue.textContent = settings.noteSpacing + 'px';
+        
+        // 应用线间距
+        lineSpacingSlider.value = settings.lineSpacing;
+        const timelineLines = document.querySelectorAll('.timeline-line');
+        const positions = [10, 30, 50, 70, 90]; // 原始位置百分比
+        const centerIndex = 2; // 中间线的索引（从0开始）
+        
+        timelineLines.forEach((line, index) => {
+            if (index === centerIndex) {
+                // 中间线保持固定位置
+                line.style.top = positions[index] + '%';
+            } else {
+                // 计算其他线相对于中间线的位置偏移
+                const offset = positions[index] - positions[centerIndex];
+                const newPosition = positions[centerIndex] + (offset * settings.lineSpacing / 20);
+                line.style.top = newPosition + '%';
+            }
+        });
+        
+        lineSpacingValue.textContent = settings.lineSpacing + '%';
+    }
 }
