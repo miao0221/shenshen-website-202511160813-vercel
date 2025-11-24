@@ -99,47 +99,30 @@ async function searchMusic(keyword) {
         
         if (mediaTagsError) throw mediaTagsError;
         
-        // 为每首音乐获取标签
-        const musicsWithTags = musics.map(music => {
-            // 获取该音乐的标签ID
-            const musicTagIds = mediaTags
-                .filter(mt => mt.media_id === music.id)
-                .map(mt => mt.tag_id);
-            
-            // 获取标签详细信息
-            const tags = allTags
-                .filter(tag => musicTagIds.includes(tag.id))
-                .map(tag => ({
-                    ...tag,
-                    category_name: categoryMap[tag.category_id] || '未知类别'
-                }));
+        // 过滤包含关键词的音乐
+        const filteredMusics = musics.filter(music => 
+            music.title.toLowerCase().includes(keyword.toLowerCase()) ||
+            music.description.toLowerCase().includes(keyword.toLowerCase())
+        );
+        
+        // 为每个音乐添加标签信息
+        return filteredMusics.map(music => {
+            // 获取该音乐的标签
+            const musicTags = mediaTags
+                .filter(tag => tag.media_id === music.id)
+                .map(tag => {
+                    const tagInfo = allTags.find(t => t.id === tag.tag_id);
+                    return {
+                        ...tagInfo,
+                        category: categoryMap[tagInfo.category_id]
+                    };
+                });
             
             return {
                 ...music,
-                tags
+                tags: musicTags
             };
         });
-        
-        // 根据关键字过滤音乐
-        const filteredMusics = musicsWithTags.filter(music => {
-            // 检查标题
-            if (music.title.toLowerCase().includes(keyword.toLowerCase())) {
-                return true;
-            }
-            
-            // 检查专辑
-            if (music.album && music.album.toLowerCase().includes(keyword.toLowerCase())) {
-                return true;
-            }
-            
-            // 检查标签
-            return music.tags.some(tag => 
-                tag.name.toLowerCase().includes(keyword.toLowerCase()) ||
-                tag.category_name.toLowerCase().includes(keyword.toLowerCase())
-            );
-        });
-        
-        return filteredMusics;
     } catch (error) {
         console.error('搜索音乐时出错:', error);
         return [];
@@ -184,47 +167,30 @@ async function searchVideos(keyword) {
         
         if (mediaTagsError) throw mediaTagsError;
         
-        // 为每个视频获取标签
-        const videosWithTags = videos.map(video => {
-            // 获取该视频的标签ID
-            const videoTagIds = mediaTags
-                .filter(mt => mt.media_id === video.id)
-                .map(mt => mt.tag_id);
-            
-            // 获取标签详细信息
-            const tags = allTags
-                .filter(tag => videoTagIds.includes(tag.id))
-                .map(tag => ({
-                    ...tag,
-                    category_name: categoryMap[tag.category_id] || '未知类别'
-                }));
+        // 过滤包含关键词的视频
+        const filteredVideos = videos.filter(video => 
+            video.title.toLowerCase().includes(keyword.toLowerCase()) ||
+            video.description.toLowerCase().includes(keyword.toLowerCase())
+        );
+        
+        // 为每个视频添加标签信息
+        return filteredVideos.map(video => {
+            // 获取该视频的标签
+            const videoTags = mediaTags
+                .filter(tag => tag.media_id === video.id)
+                .map(tag => {
+                    const tagInfo = allTags.find(t => t.id === tag.tag_id);
+                    return {
+                        ...tagInfo,
+                        category: categoryMap[tagInfo.category_id]
+                    };
+                });
             
             return {
                 ...video,
-                tags
+                tags: videoTags
             };
         });
-        
-        // 根据关键字过滤视频
-        const filteredVideos = videosWithTags.filter(video => {
-            // 检查标题
-            if (video.title.toLowerCase().includes(keyword.toLowerCase())) {
-                return true;
-            }
-            
-            // 检查描述
-            if (video.description && video.description.toLowerCase().includes(keyword.toLowerCase())) {
-                return true;
-            }
-            
-            // 检查标签
-            return video.tags.some(tag => 
-                tag.name.toLowerCase().includes(keyword.toLowerCase()) ||
-                tag.category_name.toLowerCase().includes(keyword.toLowerCase())
-            );
-        });
-        
-        return filteredVideos;
     } catch (error) {
         console.error('搜索视频时出错:', error);
         return [];
@@ -234,6 +200,7 @@ async function searchVideos(keyword) {
 // 显示搜索结果
 function displaySearchResults(musicResults, videoResults, keyword) {
     const searchResults = document.getElementById('search-results');
+    
     if (!searchResults) return;
     
     // 如果没有结果
@@ -242,69 +209,57 @@ function displaySearchResults(musicResults, videoResults, keyword) {
         return;
     }
     
-    // 构建搜索结果HTML
-    let resultsHTML = '';
+    let html = '';
     
-    // 添加音乐结果
+    // 显示音乐结果
     if (musicResults.length > 0) {
+        html += '<div class="search-results-section">';
+        html += '<h3>音乐</h3>';
+        html += '<div class="search-results-grid">';
+        
         musicResults.forEach(music => {
-            let tagsHTML = '';
-            if (music.tags && music.tags.length > 0) {
-                tagsHTML = '<div class="search-result-tags">';
-                music.tags.forEach(tag => {
-                    tagsHTML += `<span class="search-result-tag">${tag.category_name}: ${tag.name}</span>`;
-                });
-                tagsHTML += '</div>';
-            }
-            
-            resultsHTML += `
-                <div class="search-result-item" data-type="music" data-id="${music.id}">
-                    <div class="search-result-title">${music.title}</div>
-                    <span class="search-result-type music">音乐</span>
-                    <div>专辑: ${music.album || '未知'}</div>
-                    ${tagsHTML}
+            html += `
+                <div class="search-result-item">
+                    <div class="search-result-content">
+                        <h4>${music.title}</h4>
+                        <p>${music.description || ''}</p>
+                        <div class="search-result-tags">
+                            ${music.tags.map(tag => 
+                                `<span class="tag tag-${tag.category}">${tag.name}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
                 </div>
             `;
         });
+        
+        html += '</div></div>';
     }
     
-    // 添加视频结果
+    // 显示视频结果
     if (videoResults.length > 0) {
+        html += '<div class="search-results-section">';
+        html += '<h3>视频</h3>';
+        html += '<div class="search-results-grid">';
+        
         videoResults.forEach(video => {
-            let tagsHTML = '';
-            if (video.tags && video.tags.length > 0) {
-                tagsHTML = '<div class="search-result-tags">';
-                video.tags.forEach(tag => {
-                    tagsHTML += `<span class="search-result-tag">${tag.category_name}: ${tag.name}</span>`;
-                });
-                tagsHTML += '</div>';
-            }
-            
-            resultsHTML += `
-                <div class="search-result-item" data-type="video" data-id="${video.id}">
-                    <div class="search-result-title">${video.title}</div>
-                    <span class="search-result-type video">视频</span>
-                    <div>${video.description || '无描述'}</div>
-                    ${tagsHTML}
+            html += `
+                <div class="search-result-item">
+                    <div class="search-result-content">
+                        <h4>${video.title}</h4>
+                        <p>${video.description || ''}</p>
+                        <div class="search-result-tags">
+                            ${video.tags.map(tag => 
+                                `<span class="tag tag-${tag.category}">${tag.name}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
                 </div>
             `;
         });
+        
+        html += '</div></div>';
     }
     
-    searchResults.innerHTML = resultsHTML;
-    
-    // 添加点击事件
-    document.querySelectorAll('.search-result-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            const type = item.getAttribute('data-type');
-            const id = item.getAttribute('data-id');
-            
-            // 根据类型跳转到相应页面
-            if (type === 'music') {
-                window.location.hash = `#/music`;
-            } else if (type === 'video') {
-                window.location.hash = `#/video`;
-            }
-        });
-    });
+    searchResults.innerHTML = html;
 }

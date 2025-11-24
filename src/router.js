@@ -4,6 +4,16 @@ class Router {
         this.currentRoute = null;
     }
 
+    init() {
+        // 监听路由变化
+        window.addEventListener('hashchange', () => {
+            this.handleRoute();
+        });
+        
+        // 处理初始路由
+        this.handleRoute();
+    }
+
     register(path, handler) {
         this.routes[path] = handler;
     }
@@ -53,7 +63,9 @@ class Router {
                 }
                 
                 // 更新用户登录状态显示
-                await this.updateAuthStatus();
+                if (window.supabaseClient) {
+                    await this.updateAuthStatus();
+                }
             } catch (error) {
                 console.error('页面渲染错误:', error);
                 appElement.innerHTML = '<div class="error">页面加载失败</div>';
@@ -93,6 +105,8 @@ class Router {
         const welcomeText = document.getElementById('welcome-text');
         const logoutBtn = document.getElementById('logout-btn');
         const adminLink = document.getElementById('admin-link');
+        const dropdownHeader = document.querySelector('.dropdown-header');
+        const dropdownMenu = document.getElementById('dropdown-menu');
         
         if (session) {
             // 用户已登录
@@ -140,7 +154,24 @@ class Router {
                 if (logoutBtn) {
                     // 先移除已有的事件监听器
                     logoutBtn.onclick = null;
-                    logoutBtn.onclick = this.handleLogout;
+                    logoutBtn.onclick = this.handleLogout.bind(this);
+                }
+                
+                // 设置下拉菜单显示/隐藏事件
+                if (dropdownHeader && dropdownMenu) {
+                    // 移除已有的事件监听器
+                    dropdownHeader.onclick = null;
+                    dropdownHeader.onclick = (e) => {
+                        e.stopPropagation();
+                        dropdownMenu.classList.toggle('show');
+                    };
+                    
+                    // 点击页面其他地方隐藏下拉菜单
+                    document.addEventListener('click', (e) => {
+                        if (!dropdownHeader.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                            dropdownMenu.classList.remove('show');
+                        }
+                    });
                 }
             } catch (error) {
                 console.error('获取用户信息时出错:', error);
@@ -160,6 +191,11 @@ class Router {
             // 隐藏管理员中心链接
             if (adminLink) {
                 adminLink.style.display = 'none';
+            }
+            
+            // 隐藏下拉菜单
+            if (dropdownMenu) {
+                dropdownMenu.classList.remove('show');
             }
         }
     }

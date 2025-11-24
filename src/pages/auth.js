@@ -38,7 +38,7 @@ export function renderAuthPage() {
                     </div>
                     
                     <!-- 注册表单 -->
-                    <div id="register-tab" class="auth-tab-pane" style="display: none;">
+                    <div id="register-tab" class="auth-tab-pane">
                         <h2>用户注册</h2>
                         <form id="register-form" class="auth-form">
                             <div class="form-group">
@@ -88,27 +88,45 @@ export function renderAuthPage() {
 }
 
 export function setupAuthPage() {
+    // 等待DOM更新完成后再初始化
+    setTimeout(() => {
+        initAuthPage();
+    }, 0);
+}
+
+function initAuthPage() {
     // 设置标签页切换
-    const tabButtons = document.querySelectorAll('[data-auth-tab]');
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            // 更新激活的标签按钮
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            button.classList.add('active');
-            
-            // 显示对应的标签内容
-            const tabName = button.getAttribute('data-auth-tab');
-            document.querySelectorAll('.auth-tab-pane').forEach(pane => {
-                pane.style.display = 'none';
-            });
-            
-            const targetPane = document.getElementById(tabName + '-tab');
-            if (targetPane) {
-                targetPane.style.display = 'block';
-            }
+    const authContainer = document.querySelector('.auth-page');
+    if (!authContainer) {
+        console.warn('未找到认证页面容器');
+        return;
+    }
+    
+    // 使用事件委托处理标签页切换
+    authContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('[data-auth-tab]');
+        if (!button) return;
+        
+        e.preventDefault();
+        
+        // 更新激活的标签按钮
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
         });
+        button.classList.add('active');
+        
+        // 显示对应的标签内容
+        document.querySelectorAll('.auth-tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        
+        const tabName = button.getAttribute('data-auth-tab');
+        const targetPane = document.getElementById(`${tabName}-tab`);
+        if (targetPane) {
+            targetPane.classList.add('active');
+        } else {
+            console.warn('未找到标签页:', `${tabName}-tab`);
+        }
     });
     
     // 设置表单提交事件

@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="./src/styles/main.css">
 </head>
 <body>
+    <!-- 粒子背景画布 -->
+    <canvas id="particle-canvas"></canvas>
+    
     <!-- 网站标题 -->
     <div class="site-title">
         <h1>深的N次方</h1>
@@ -67,149 +70,6 @@
         <!-- 页面内容将在这里动态加载 -->
     </main>
 
-    <script>
-        // 初始化Supabase客户端
-        const SUPABASE_URL = 'https://ywzqkjparfslwwvjuwlx.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3enFranBhcmZzbHd3dmp1d2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMjI0ODYsImV4cCI6MjA3ODc5ODQ4Nn0.2fKie0CH12aoxvnUAO2IPrdZ1NtkyK8ujErx7FTiDxY';
-        window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // 检查用户登录状态并更新导航栏
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const { data: { session } } = await window.supabaseClient.auth.getSession();
-                updateAuthUI(session);
-            } catch (error) {
-                console.error('检查用户登录状态时出错:', error);
-            }
-            
-            // 添加下拉菜单事件监听器
-            const dropdownHeader = document.querySelector('.dropdown-header');
-            const dropdownMenu = document.getElementById('dropdown-menu');
-            
-            if (dropdownHeader && dropdownMenu) {
-                dropdownHeader.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    dropdownMenu.classList.toggle('show');
-                });
-                
-                // 点击页面其他地方隐藏下拉菜单
-                document.addEventListener('click', (e) => {
-                    if (!dropdownHeader.contains(e.target)) {
-                        dropdownMenu.classList.remove('show');
-                    }
-                });
-            }
-        });
-        
-        // 更新认证UI
-        async function updateAuthUI(session) {
-            const authLinks = document.getElementById('auth-links');
-            const userDropdown = document.getElementById('user-dropdown');
-            const welcomeText = document.getElementById('welcome-text');
-            const logoutBtn = document.getElementById('logout-btn');
-            const adminLink = document.getElementById('admin-link');
-            
-            if (session) {
-                // 用户已登录
-                try {
-                    const { data: { user } } = await window.supabaseClient.auth.getUser();
-                    const userEmail = user?.email || '用户';
-                    
-                    // 获取用户昵称
-                    let userNickname = '';
-                    try {
-                        const { data: profile, error } = await window.supabaseClient
-                            .from('user_profiles')
-                            .select('nickname')
-                            .eq('id', user.id)
-                            .single();
-                        
-                        if (error && error.code !== 'PGRST116') { // PGRST116表示未找到记录
-                            console.error('获取用户资料时出错:', error);
-                        }
-                        
-                        userNickname = profile?.nickname || '';
-                    } catch (error) {
-                        console.error('获取用户资料时出错:', error);
-                    }
-                    
-                    // 隐藏登录/注册链接
-                    if (authLinks) {
-                        authLinks.style.display = 'none';
-                    }
-                    
-                    // 显示用户下拉菜单和欢迎信息
-                    if (userDropdown && welcomeText) {
-                        const displayName = userNickname || userEmail;
-                        welcomeText.textContent = `欢迎 ${displayName}`;
-                        userDropdown.style.display = 'block';
-                    }
-                    
-                    // 检查是否为管理员并显示管理员中心链接
-                    if (adminLink) {
-                        const isAdmin = await checkIfAdmin(userEmail);
-                        adminLink.style.display = isAdmin ? 'block' : 'none';
-                    }
-                    
-                    // 设置退出按钮事件
-                    if (logoutBtn) {
-                        logoutBtn.onclick = handleLogout;
-                    }
-                } catch (error) {
-                    console.error('获取用户信息时出错:', error);
-                }
-            } else {
-                // 用户未登录
-                // 显示登录/注册链接
-                if (authLinks) {
-                    authLinks.style.display = 'block';
-                }
-                
-                // 隐藏用户下拉菜单
-                if (userDropdown) {
-                    userDropdown.style.display = 'none';
-                }
-                
-                // 隐藏管理员中心链接
-                if (adminLink) {
-                    adminLink.style.display = 'none';
-                }
-            }
-        }
-        
-        // 检查用户是否为管理员
-        async function checkIfAdmin(email) {
-            try {
-                const { data, error } = await window.supabaseClient
-                    .from('admins')
-                    .select('id')
-                    .eq('email', email)
-                    .single();
-                
-                if (error && error.code !== 'PGRST116') { // PGRST116表示未找到记录
-                    console.error('检查管理员权限时出错:', error);
-                    return false;
-                }
-                
-                return !!data;
-            } catch (error) {
-                console.error('检查管理员权限时出错:', error);
-                return false;
-            }
-        }
-        
-        // 处理退出登录
-        async function handleLogout() {
-            try {
-                await window.supabaseClient.auth.signOut();
-                updateAuthUI(null);
-                window.location.hash = '#/';
-                window.location.reload();
-            } catch (error) {
-                console.error('登出失败:', error);
-            }
-        }
-    </script>
     <script type="module" src="./src/main.js"></script>
 </body>
 </html>
