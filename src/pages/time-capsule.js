@@ -5,9 +5,6 @@ export function renderTimeCapsulePage() {
             <p>这里记录着周深音乐旅程中的重要时刻和珍贵回忆。</p>
             
             <div class="timeline-container">
-                <div class="timeline-header">
-                    <h3>周深音乐旅程时间轴</h3>
-                </div>
                 <div class="timeline-wrapper">
                     <div class="timeline-line timeline-line-1"></div>
                     <div class="timeline-line timeline-line-2"></div>
@@ -326,6 +323,16 @@ class Timeline {
             this.renderVisiblePoints(); // 仅渲染可见点
             this.bindEvents();
             
+            // 初始化时更新指示器位置
+            setTimeout(() => {
+                this.updateIndicatorPosition();
+            }, 100);
+            
+            // 监听窗口大小变化，更新指示器位置
+            window.addEventListener('resize', () => {
+                this.updateIndicatorPosition();
+            });
+            
             // 监听滚动事件以更新可见点
             this.timelineWrapper.addEventListener('scroll', () => {
                 this.renderVisiblePoints();
@@ -333,13 +340,9 @@ class Timeline {
         }
     }
 
-    // 生成所有点的数据但不创建DOM元素
     generatePointsData() {
         const today = new Date();
         const totalDays = 200; // 总共显示200天
-        
-        // 恢复点间距为120px
-        this.pointSpacing = 120;
         
         // 定义音符字符
         const musicalNotes = ["♪", "♫", "♩", "♬", "♭", "♮", "♯"];
@@ -366,51 +369,48 @@ class Timeline {
             });
         }
         
-        // 设置容器宽度
-        this.pointsContainer.style.width = `${totalDays * this.pointSpacing}px`;
+        // 设置容器宽度，确保有足够的空间容纳所有点
+        this.pointsContainer.style.width = `${(totalDays + 1) * this.pointSpacing}px`;
     }
-
-    // 渲染当前可见的点
+    
     renderVisiblePoints() {
-        if (!this.pointsContainer || !this.timelineWrapper) return;
+        if (!this.pointsContainer) return;
         
-        const containerRect = this.timelineWrapper.getBoundingClientRect();
-        const containerScrollLeft = this.timelineWrapper.scrollLeft || 0;
-        const containerWidth = containerRect.width;
+        // 获取时间轴容器的宽度
+        const containerWidth = this.timelineWrapper.offsetWidth;
         
-        // 计算可见区域（增加一些边距）
-        const visibleStart = containerScrollLeft - 200;
-        const visibleEnd = containerScrollLeft + containerWidth + 200;
+        // 获取当前滚动位置
+        const scrollPosition = -this.currentPosition;
         
-        // 找到可见的点
+        // 计算可见范围
+        const visibleStart = scrollPosition - containerWidth;
+        const visibleEnd = scrollPosition + containerWidth * 2;
+        
+        // 找出所有在可见范围内的点
         const newVisiblePoints = new Set();
-        const pointsToRender = [];
-        
-        for (let i = 0; i < this.allPointsData.length; i++) {
-            const pointData = this.allPointsData[i];
+        this.allPointsData.forEach((pointData, index) => {
             if (pointData.position >= visibleStart && pointData.position <= visibleEnd) {
-                newVisiblePoints.add(i);
-                if (!this.visiblePoints.has(i)) {
-                    pointsToRender.push({index: i, data: pointData});
-                }
-            }
-        }
-        
-        // 移除不再可见的点
-        const pointsToRemove = [];
-        this.visiblePoints.forEach(index => {
-            if (!newVisiblePoints.has(index)) {
-                pointsToRemove.push(index);
+                newVisiblePoints.add(index);
             }
         });
         
-        // 移除DOM元素
+        // 找出需要添加和移除的点
+        const pointsToAdd = [...newVisiblePoints].filter(index => !this.visiblePoints.has(index));
+        const pointsToRemove = [...this.visiblePoints].filter(index => !newVisiblePoints.has(index));
+        
+        // 移除不在可见范围内的点
         pointsToRemove.forEach(index => {
-            const pointElement = this.pointsContainer.querySelector(`[data-index="${index}"]`);
-            if (pointElement) {
-                pointElement.remove();
+            const point = this.pointsContainer.querySelector(`[data-index="${index}"]`);
+            if (point) {
+                this.pointsContainer.removeChild(point);
             }
         });
+        
+        // 获取需要渲染的点数据
+        const pointsToRender = pointsToAdd.map(index => ({
+            index,
+            data: this.allPointsData[index]
+        }));
         
         // 添加新的可见点
         pointsToRender.forEach(({index, data}) => {
@@ -427,6 +427,7 @@ class Timeline {
             
             // 使用CSS变量设置音符内容，便于样式控制
             point.style.setProperty('--note-content', `"${data.note}"`);
+            point.setAttribute('data-note', data.note);
             
             // 添加鼠标悬停事件
             point.addEventListener('mouseenter', (e) => {
@@ -452,7 +453,7 @@ class Timeline {
         // 更新可见点集合
         this.visiblePoints = newVisiblePoints;
     }
-
+    
     bindEvents() {
         if (!this.timelineWrapper) return;
         
@@ -495,12 +496,6 @@ class Timeline {
             e.stopPropagation();
         });
         
-        this.timelineWrapper.addEventListener('touchend', (e) => {
-            this.isDragging = false;
-            this.timelineWrapper.style.cursor = 'grab';
-            e.stopPropagation();
-        });
-        
         this.timelineWrapper.addEventListener('mousemove', (e) => {
             if (!this.isDragging) return;
             
@@ -533,7 +528,7 @@ class Timeline {
             e.stopPropagation();
         });
     }
-
+    
     selectPoint(point) {
         // 移除之前选中点的激活状态
         if (this.activePoint) {
@@ -543,6 +538,9 @@ class Timeline {
         // 设置新的激活点
         this.activePoint = point;
         point.classList.add('active');
+        
+        // 更新指示器位置
+        this.updateIndicatorPosition();
     }
     
     // 滑动到中心
@@ -575,7 +573,7 @@ class Timeline {
     }
     
     updateIndicatorPosition() {
-        if (!this.activePoint || !this.indicator) return;
+        if (!this.indicator) return;
         
         // 获取时间轴容器的宽度
         const containerWidth = this.timelineWrapper.offsetWidth;
@@ -585,13 +583,14 @@ class Timeline {
         
         // 使用 Math.round 确保像素对齐，避免模糊
         this.indicator.style.left = '' + Math.round(indicatorLeft) + 'px';
-        this.indicator.style.top = '-10px';
+        this.indicator.style.top = '-25px';
         
         // 确保指示标可见
         this.indicator.style.display = 'block';
         this.indicator.style.visibility = 'visible';
+        this.indicator.style.opacity = '1';
     }
-
+    
     selectPointByDate(date) {
         if (!this.pointsContainer) return;
         
@@ -643,12 +642,12 @@ class Calendar {
         this.isRendered = false; // 标记是否已渲染
         this.init();
     }
-
+    
     init() {
         // 延迟初始化直到需要时
         this.bindEvents();
     }
-
+    
     bindEvents() {
         // 使用事件委托处理日历事件
         document.addEventListener('click', (e) => {
@@ -688,7 +687,7 @@ class Calendar {
             this.selectDate(e.detail.date);
         });
     }
-
+    
     // 按需渲染日历
     renderIfNeeded() {
         if (!this.isRendered) {
@@ -696,7 +695,7 @@ class Calendar {
             this.isRendered = true;
         }
     }
-
+    
     changeMonth(delta) {
         this.displayMonth += delta;
         if (this.displayMonth > 11) {
@@ -708,7 +707,7 @@ class Calendar {
         }
         this.renderCalendar();
     }
-
+    
     renderCalendar() {
         const currentMonthElement = document.getElementById('current-month');
         const daysGrid = document.getElementById('days-grid');
@@ -719,7 +718,7 @@ class Calendar {
         const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月',
                            '7月', '8月', '9月', '10月', '11月', '12月'];
         currentMonthElement.textContent = `${this.displayYear}年 ${monthNames[this.displayMonth]}`;
-
+        
         // 获取该月第一天和最后一天
         const firstDay = new Date(this.displayYear, this.displayMonth, 1);
         const lastDay = new Date(this.displayYear, this.displayMonth + 1, 0);
@@ -732,7 +731,7 @@ class Calendar {
         
         // 清空日历网格
         daysGrid.innerHTML = '';
-
+        
         // 添加上个月的日期
         for (let i = firstDayOfWeek - 1; i >= 0; i--) {
             const dayElement = document.createElement('div');
@@ -741,7 +740,7 @@ class Calendar {
             dayElement.dataset.date = `${(this.displayMonth === 0 ? this.displayYear - 1 : this.displayYear)}-${String(this.displayMonth === 0 ? 12 : this.displayMonth).padStart(2, '0')}-${String(prevMonthLastDay - i).padStart(2, '0')}`;
             daysGrid.appendChild(dayElement);
         }
-
+        
         // 添加当前月的日期
         for (let i = 1; i <= lastDay.getDate(); i++) {
             const dayElement = document.createElement('div');
@@ -767,7 +766,7 @@ class Calendar {
             
             daysGrid.appendChild(dayElement);
         }
-
+        
         // 添加下个月的日期以填满网格
         const totalCells = 42; // 6行7列
         const remainingCells = totalCells - (firstDayOfWeek + lastDay.getDate());

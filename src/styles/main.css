@@ -876,20 +876,23 @@ body {
 /* 时间轴样式 */
 .timeline-container {
     position: relative;
-    width: 100%;
-    margin: 200px 0 50px 0;
+    /* 修改：使用绝对定位突破父容器限制 */
+    width: 100vw;
+    /* 修改：使用负边距使容器居中并占满全屏宽度 */
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 50px 0 50px 0;
     z-index: 10;
     /* 移除背景和边框，让五线谱可以延伸到屏幕边缘 */
     background: transparent;
     border-radius: 0;
     padding: 20px 0;
     backdrop-filter: none;
-    max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    overflow: visible;
+    /* 移除max-width限制 */
+    max-width: none;
     /* 确保容器可以正确显示子元素 */
-    overflow-x: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
 }
 
 .timeline-header {
@@ -913,29 +916,32 @@ body {
     overflow-y: visible;
     background: transparent;
     border-radius: 0;
-    margin: 2rem 0;
+    /* margin: 2rem 0; */
     border: none;
     box-shadow: none;
     backdrop-filter: none;
     cursor: grab;
     /* 确保可以水平拖动 */
     touch-action: none;
-    /* 使用全宽度并确保居中 */
-    width: 100vw;
-    max-width: 100vw;
-    /* 使用负边距将容器向左移动，使其内容可以延伸到屏幕边缘 */
-    margin-left: calc(-50vw + 50%);
-    margin-right: calc(-50vw + 50%);
+    /* 使用全宽度 */
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
     padding: 0;
     /* 确保容器具有适当的z-index */
     z-index: 10;
+    /* 确保容器不会裁剪指示器，但允许音符正常显示 */
+    overflow: visible;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 
 .timeline-line {
     position: absolute;
-    /* 使用足够大的数值确保线条延伸到屏幕边缘 */
-    left: -50%;
-    right: -50%;
+    /* 使用合适的数值使线条与容器匹配 */
+    left: 0;
+    right: 0;
     height: 2px;
     background-color: rgba(100, 200, 255, 0.3);
     z-index: 1;
@@ -1000,7 +1006,7 @@ body {
 /* 三角形指示标样式 */
 .triangle-indicator {
     position: absolute;
-    top: -10px;
+    top: -25px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
@@ -1015,6 +1021,10 @@ body {
     display: block !important;
     visibility: visible !important;
     pointer-events: none; /* 防止遮挡下方元素的交互 */
+    /* 添加额外的可见性保障 */
+    opacity: 1 !important;
+    /* 确保指示器在正确的容器中 */
+    position: absolute;
 }
 
 /* 浮动动画 */
@@ -1033,10 +1043,14 @@ body {
 /* 呼吸灯效果 */
 @keyframes breathe {
     0%, 100% {
-        filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.8));
+        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.9))
+                drop-shadow(0 0 15px rgba(255, 215, 0, 0.7))
+                drop-shadow(0 0 25px rgba(255, 215, 0, 0.5));
     }
     50% {
-        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 1));
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1))
+                drop-shadow(0 0 25px rgba(255, 215, 0, 0.9))
+                drop-shadow(0 0 40px rgba(255, 215, 0, 0.7));
     }
 }
 
@@ -1049,6 +1063,8 @@ body {
     white-space: nowrap;
     transition: transform 0.3s ease;
     z-index: 90;
+    /* 确保音符点容器不会被裁剪 */
+    overflow: visible;
 }
 
 .timeline-point {
@@ -1056,7 +1072,7 @@ body {
     width: 100px;
     height: 100px;
     /* 移除背景色和圆角，使用音符样式 */
-    transform: translate(-50%, -50%);
+    /* transform: translate(-50%, -50%); */
     transition: all 0.3s ease;
     cursor: pointer;
     z-index: 101;
@@ -1068,19 +1084,30 @@ body {
     font-size: 80px;
     text-align: center;
     line-height: 100px;
-    top: 50%;
     /* 添加旋转效果使音符更灵动 */
-    transform: translate(-50%, -50%) rotate(0deg);
+    /* transform: translate(-50%, -50%) rotate(0deg); */
     /* 添加阴影使音符更有立体感 */
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     /* 添加动画使音符更生动 */
     animation: float 3s ease-in-out infinite;
+    /* 确保音符点可见 */
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* 确保音符点不会被裁剪 */
+    overflow: visible;
+    /* 确保音符点显示在正确位置 */
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .timeline-point::before {
     /* 使用JavaScript设置的音符字符 */
     content: attr(data-note);
     display: block;
+    /* 确保音符内容可见 */
+    visibility: visible;
+    opacity: 1;
 }
 
 .timeline-point:hover {
@@ -1199,24 +1226,21 @@ body {
     
     /* 调整小屏幕上的三角形大小 */
     .triangle-indicator {
-        top: -28px;
+        top: -35px;
         left: 50%;
         transform: translateX(-50%);
         width: 0;
         height: 0;
-        border-left: 28px solid transparent;
-        border-right: 28px solid transparent;
-        border-top: 45px solid #FFD700;
-        z-index: 999;
-        filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5))
-                drop-shadow(0 0 10px rgba(255, 215, 0, 0.4))
-                drop-shadow(0 0 15px rgba(255, 215, 0, 0.3))
-                drop-shadow(0 0 20px rgba(255, 215, 0, 0.2));
-        animation: float 3s ease-in-out infinite;
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5),
-                    0 0 20px rgba(255, 215, 0, 0.3),
-                    0 0 30px rgba(255, 215, 0, 0.2);
-        pointer-events: none; /* 防止遮挡下方元素的交互 */
+        border-left: 20px solid transparent;
+        border-right: 20px solid transparent;
+        border-top: 35px solid #FFD700;
+        z-index: 1000;
+        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.9))
+                drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))
+                drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
+        animation: float 3s ease-in-out infinite, breathe 2s ease-in-out infinite;
+        pointer-events: none;
+        border-bottom: 2px solid rgba(255, 223, 0, 0.6);
     }
     
     .content-section h2 {
