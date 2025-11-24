@@ -307,7 +307,7 @@ class Timeline {
         this.timelineWrapper = document.querySelector('.timeline-wrapper');
         this.activePoint = null;
         this.currentPosition = 0;
-        this.pointSpacing = 120; // 点之间的间距
+        this.pointSpacing = 132; // 点之间的间距
         this.isDragging = false;
         this.startX = 0;
         this.startPosition = 0;
@@ -344,8 +344,8 @@ class Timeline {
         const today = new Date();
         const totalDays = 200; // 总共显示200天
         
-        // 定义音符字符
-        const musicalNotes = ["♪", "♫", "♩", "♬", "♭", "♮", "♯"];
+        // 定义音符字符，只保留前10种音符类型
+        const musicalNotes = ["♪", "♫", "♩", "♬", "♭", "♮", "♯", "𝄞", "𝄢", "𝄡"];
         
         // 生成点数据
         for (let i = -100; i <= 100; i++) {
@@ -355,8 +355,21 @@ class Timeline {
             // 计算点的位置
             const position = (i + 100) * this.pointSpacing;
             
-            // 添加随机音符样式
-            const randomNote = musicalNotes[Math.floor(Math.random() * musicalNotes.length)];
+            // 添加随机音符样式，确保相邻音符不重复
+            let randomNote;
+            if (i > -100 && this.allPointsData.length > 0) {
+                // 获取前一个音符
+                const previousNote = this.allPointsData[this.allPointsData.length - 1].note;
+                
+                // 创建不包含前一个音符的候选数组
+                const candidateNotes = musicalNotes.filter(note => note !== previousNote);
+                
+                // 从候选数组中随机选择
+                randomNote = candidateNotes[Math.floor(Math.random() * candidateNotes.length)];
+            } else {
+                // 第一个音符可以随机选择
+                randomNote = musicalNotes[Math.floor(Math.random() * musicalNotes.length)];
+            }
             
             // 添加日期数据（统一使用 YYYY-MM-DD 格式用于匹配）
             const dateStr = `${pointDate.getFullYear()}-${String(pointDate.getMonth() + 1).padStart(2, '0')}-${String(pointDate.getDate()).padStart(2, '0')}`;

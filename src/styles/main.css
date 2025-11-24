@@ -957,33 +957,33 @@ body {
 
 .timeline-line-2 {
     top: 30%;
-    background-image: linear-gradient(90deg, #4cc9f0, #4895ef, #4cc9f0);
-    color: #4cc9f0;
-    box-shadow: 0 0 8px #4cc9f0;
+    background-image: linear-gradient(90deg, #7afcff, #9de0ff, #7afcff);
+    color: #7afcff;
+    box-shadow: 0 0 8px #7afcff;
     animation: lineGlow 4s ease-in-out infinite 0.5s;
 }
 
 .timeline-line-3 {
     top: 50%;
-    background-image: linear-gradient(90deg, #ffd166, #ffe194, #ffd166);
-    color: #ffd166;
-    box-shadow: 0 0 8px #ffd166;
+    background-image: linear-gradient(90deg, #feff9c, #ffffb3, #feff9c);
+    color: #feff9c;
+    box-shadow: 0 0 8px #feff9c;
     animation: lineGlow 5s ease-in-out infinite 1s;
 }
 
 .timeline-line-4 {
     top: 70%;
-    background-image: linear-gradient(90deg, #6a0572, #9d4edd, #6a0572);
-    color: #6a0572;
-    box-shadow: 0 0 8px #6a0572;
+    background-image: linear-gradient(90deg, #d8b4fe, #e2c2fe, #d8b4fe);
+    color: #d8b4fe;
+    box-shadow: 0 0 8px #d8b4fe;
     animation: lineGlow 3.5s ease-in-out infinite 1.5s;
 }
 
 .timeline-line-5 {
     top: 90%;
-    background-image: linear-gradient(90deg, #1a936f, #4cb580, #1a936f);
-    color: #1a936f;
-    box-shadow: 0 0 8px #1a936f;
+    background-image: linear-gradient(90deg, #ffcb6b, #ffd580, #ffcb6b);
+    color: #ffcb6b;
+    box-shadow: 0 0 8px #ffcb6b;
     animation: lineGlow 4.5s ease-in-out infinite 2s;
 }
 
@@ -1016,7 +1016,8 @@ body {
     border-top: 25px solid #FFD700;
     z-index: 999;
     filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.8));
-    animation: float 3s ease-in-out infinite, breathe 2s ease-in-out infinite;
+    /* 修改：只为三角形指示器使用垂直浮动动画，而不是通用的float动画 */
+    animation: triangleFloat 2s ease-in-out infinite, breathe 2s ease-in-out infinite;
     /* 确保指示器可见 */
     display: block !important;
     visibility: visible !important;
@@ -1030,10 +1031,23 @@ body {
 /* 浮动动画 */
 @keyframes float {
     0% {
+        transform: translate(-50%, -50%) translateY(0px) rotate(0deg);
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-5px) rotate(5deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) translateY(0px) rotate(0deg);
+    }
+}
+
+/* 为三角形指示器专门设计的垂直浮动动画 */
+@keyframes triangleFloat {
+    0% {
         transform: translateX(-50%) translateY(0px);
     }
     50% {
-        transform: translateX(-50%) translateY(-10px);
+        transform: translateX(-50%) translateY(-5px);
     }
     100% {
         transform: translateX(-50%) translateY(0px);
@@ -1069,8 +1083,8 @@ body {
 
 .timeline-point {
     position: absolute;
-    width: 100px;
-    height: 100px;
+    width: 110px;
+    height: 110px;
     /* 移除背景色和圆角，使用音符样式 */
     /* transform: translate(-50%, -50%); */
     transition: all 0.3s ease;
@@ -1081,9 +1095,9 @@ body {
     justify-content: center;
     /* 音符样式 */
     color: white;
-    font-size: 80px;
+    font-size: 88px;
     text-align: center;
-    line-height: 100px;
+    line-height: 110px;
     /* 添加旋转效果使音符更灵动 */
     /* transform: translate(-50%, -50%) rotate(0deg); */
     /* 添加阴影使音符更有立体感 */
