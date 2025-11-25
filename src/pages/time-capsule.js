@@ -24,18 +24,38 @@ export async function renderTimeCapsulePage() {
                     </div>
                     <div class="control-group">
                         <label for="note-size">音符大小:</label>
-                        <input type="range" id="note-size" min="20" max="200" value="88">
-                        <span id="size-value">88px</span>
+                        <input type="range" id="note-size" min="20" max="200" value="130">
+                        <span id="size-value">130px</span>
                     </div>
                     <div class="control-group">
                         <label for="note-spacing">音符间距:</label>
-                        <input type="range" id="note-spacing" min="50" max="300" value="132">
-                        <span id="spacing-value">132px</span>
+                        <input type="range" id="note-spacing" min="50" max="300" value="200">
+                        <span id="spacing-value">200px</span>
                     </div>
                     <div class="control-group">
                         <label for="line-spacing">线间距:</label>
                         <input type="range" id="line-spacing" min="10" max="100" value="20">
                         <span id="line-spacing-value">20%</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="line-width">线宽:</label>
+                        <input type="range" id="line-width" min="1" max="20" value="5">
+                        <span id="line-width-value">5px</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="line-glow">发光范围:</label>
+                        <input type="range" id="line-glow" min="0" max="50" value="8">
+                        <span id="line-glow-value">8px</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="vertical-range">垂直随机范围:</label>
+                        <input type="range" id="vertical-range" min="0" max="200" value="200">
+                        <span id="vertical-range-value">200px</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="vertical-position">垂直位置调整:</label>
+                        <input type="range" id="vertical-position" min="0" max="200" value="30">
+                        <span id="vertical-position-value">30px</span>
                     </div>
                     <div class="control-group">
                         <button id="reset-controls">重置</button>
@@ -348,13 +368,18 @@ class Timeline {
         this.timelineWrapper = document.querySelector('.timeline-wrapper');
         this.activePoint = null;
         this.currentPosition = 0;
-        this.pointSpacing = 132; // 点之间的间距
+        this.pointSpacing = 200; // 点之间的间距
+        this.verticalRange = 200; // 垂直方向上的随机范围
         this.isDragging = false;
         this.startX = 0;
         this.startPosition = 0;
         this.indicator = document.querySelector('.triangle-indicator');
         this.allPointsData = []; // 存储所有点的数据
         this.visiblePoints = new Set(); // 存储当前可见的点
+        
+        // 保存实例引用以便其他函数访问
+        window.timelineInstance = this;
+        
         this.init();
     }
 
@@ -363,6 +388,9 @@ class Timeline {
             this.generatePointsData(); // 仅生成数据
             this.renderVisiblePoints(); // 仅渲染可见点
             this.bindEvents();
+            
+            // 初始化时应用垂直位置调整
+            this.applyVerticalPosition();
             
             // 初始化时更新指示器位置
             setTimeout(() => {
@@ -473,9 +501,22 @@ class Timeline {
             point.style.left = `${data.position}px`;
             point.setAttribute('data-position', data.position);
             point.setAttribute('data-note', data.note);
-            // 使用transform进行精确的垂直居中，确保与五线谱的第三线完美对齐
-            point.style.top = '50%';
-            point.style.transform = 'translateY(-50%)';
+            
+            // 获取垂直位置调整的值
+            const verticalPosition = document.getElementById('vertical-position')?.value || 30;
+            
+            // 根据垂直随机范围设置音符的垂直位置
+            if (this.verticalRange > 0) {
+                // 生成 -verticalRange/2 到 +verticalRange/2 之间的随机值
+                const verticalOffset = (Math.random() - 0.5) * this.verticalRange;
+                point.style.top = `calc(50% + ${verticalOffset}px + ${verticalPosition}px)`;
+                point.style.transform = 'translateY(-50%)';
+            } else {
+                // 默认位置（垂直居中）并加上垂直位置调整值
+                point.style.top = `calc(50% + ${verticalPosition}px)`;
+                point.style.transform = 'translateY(-50%)';
+            }
+            
             point.setAttribute('data-date', data.date);
             point.setAttribute('data-index', index);
             
@@ -637,7 +678,7 @@ class Timeline {
         
         // 使用 Math.round 确保像素对齐，避免模糊
         this.indicator.style.left = '' + Math.round(indicatorLeft) + 'px';
-        this.indicator.style.top = '-25px';
+        this.indicator.style.top = '-7.5px';
         
         // 确保指示标可见
         this.indicator.style.display = 'block';
@@ -681,6 +722,32 @@ class Timeline {
                 this.activePoint.classList.remove('active');
                 this.activePoint = null;
             }
+        }
+    }
+    
+    // 应用垂直位置调整
+    applyVerticalPosition() {
+        // 获取保存的设置或使用默认值
+        let verticalPosition = 30; // 默认值
+        
+        const savedSettings = localStorage.getItem('timelineSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            if (settings.verticalPosition !== undefined) {
+                verticalPosition = settings.verticalPosition;
+            }
+        }
+        
+        // 应用垂直位置调整到五线谱线条
+        const timelineLines = document.querySelectorAll('.timeline-line');
+        timelineLines.forEach((line, index) => {
+            line.style.transform = `translateY(${verticalPosition}px)`;
+        });
+        
+        // 应用垂直位置调整到三角形指示器
+        const triangleIndicator = document.querySelector('.triangle-indicator');
+        if (triangleIndicator) {
+            triangleIndicator.style.transform = `translateX(-50%) translateY(calc(-7.5px + ${verticalPosition}px))`;
         }
     }
 }
@@ -886,15 +953,77 @@ function initControlPanel(timeline) {
     const sizeSlider = document.getElementById('note-size');
     const spacingSlider = document.getElementById('note-spacing');
     const lineSpacingSlider = document.getElementById('line-spacing');
+    const lineWidthSlider = document.getElementById('line-width');
+    const lineGlowSlider = document.getElementById('line-glow');
+    const verticalRangeSlider = document.getElementById('vertical-range');
+    const verticalPositionSlider = document.getElementById('vertical-position');
     const heightValue = document.getElementById('height-value');
     const sizeValue = document.getElementById('size-value');
     const spacingValue = document.getElementById('spacing-value');
     const lineSpacingValue = document.getElementById('line-spacing-value');
+    const lineWidthValue = document.getElementById('line-width-value');
+    const lineGlowValue = document.getElementById('line-glow-value');
+    const verticalRangeValue = document.getElementById('vertical-range-value');
+    const verticalPositionValue = document.getElementById('vertical-position-value');
     const resetBtn = document.getElementById('reset-controls');
     
     // 检查元素是否存在
     if (!controlPanel || !toggleBtn || !timelineWrapper || !heightSlider || !sizeSlider || !spacingSlider || !lineSpacingSlider) {
         return;
+    }
+    
+    // 添加拖动功能
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+    
+    // 设置控制台初始位置
+    controlPanel.style.position = 'fixed';
+    controlPanel.style.top = '150px';
+    controlPanel.style.right = '20px';
+    controlPanel.style.margin = '0';
+    
+    // 绑定拖动事件
+    controlPanel.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    
+    function dragStart(e) {
+        // 只有点击控制台头部才能拖动
+        if (e.target.closest('.control-panel-header')) {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            isDragging = true;
+        }
+    }
+    
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            
+            xOffset = currentX;
+            yOffset = currentY;
+            
+            setTranslate(currentX, currentY, controlPanel);
+        }
+    }
+    
+    function dragEnd(e) {
+        initialX = currentX;
+        initialY = currentY;
+        
+        isDragging = false;
+    }
+    
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
     }
     
     // 切换操作台显示/隐藏
@@ -961,6 +1090,97 @@ function initControlPanel(timeline) {
         lineSpacingValue.textContent = lineSpacing + '%';
     });
     
+    // 初始化线宽滑块
+    if (lineWidthSlider) {
+        lineWidthSlider.addEventListener('input', () => {
+            const lineWidth = lineWidthSlider.value;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            timelineLines.forEach(line => {
+                line.style.height = lineWidth + 'px';
+            });
+            lineWidthValue.textContent = lineWidth + 'px';
+        });
+    }
+    
+    // 初始化发光范围滑块
+    if (lineGlowSlider) {
+        lineGlowSlider.addEventListener('input', () => {
+            const glowSize = lineGlowSlider.value;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            const colors = ['#ff6b6b', '#7afcff', '#feff9c', '#d8b4fe', '#ffcb6b'];
+            
+            timelineLines.forEach((line, index) => {
+                const color = colors[index];
+                line.style.boxShadow = `0 0 ${glowSize}px ${color}`;
+            });
+            lineGlowValue.textContent = glowSize + 'px';
+        });
+    }
+    
+    // 初始化垂直随机范围滑块
+    if (verticalRangeSlider) {
+        verticalRangeSlider.addEventListener('input', () => {
+            const verticalRange = verticalRangeSlider.value;
+            timeline.verticalRange = parseInt(verticalRange);
+            
+            // 重新渲染所有可见点以应用新的垂直位置
+            timeline.allPointsData = []; // 清空现有数据
+            timeline.generatePointsData(); // 重新生成点数据
+            
+            // 清除现有的所有点元素
+            timeline.pointsContainer.innerHTML = '';
+            timeline.visiblePoints.clear();
+            
+            timeline.renderVisiblePoints(); // 重新渲染可见点
+            
+            verticalRangeValue.textContent = verticalRange + 'px';
+        });
+    }
+    
+    // 初始化垂直位置调整滑块
+    if (verticalPositionSlider) {
+        verticalPositionSlider.addEventListener('input', () => {
+            const verticalPosition = verticalPositionSlider.value;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            const triangleIndicator = document.querySelector('.triangle-indicator');
+            const timelinePoints = document.querySelectorAll('.timeline-point');
+            
+            // 使用transform调整五线谱线条的位置
+            timelineLines.forEach((line, index) => {
+                line.style.transform = `translateY(${verticalPosition}px)`;
+            });
+            
+            // 使用transform调整三角形指示器的位置
+            if (triangleIndicator) {
+                // 三角形本身已经有translateX(-50%)，所以我们需要保留它
+                triangleIndicator.style.transform = `translateX(-50%) translateY(calc(-7.5px + ${verticalPosition}px))`;
+            }
+            
+            // 调整所有音符的位置
+            timelinePoints.forEach(point => {
+                // 获取当前的垂直随机范围值
+                const timeline = window.timelineInstance; // 获取Timeline实例
+                const verticalRange = timeline ? timeline.verticalRange : 0;
+                
+                if (verticalRange > 0) {
+                    // 重新计算带垂直随机偏移的位置
+                    const currentTop = point.style.top;
+                    // 提取随机偏移值
+                    const match = currentTop.match(/calc\(50% \+ ([^+]+)px \+ ([^)]+)px\)/);
+                    if (match) {
+                        const randomOffset = match[1];
+                        point.style.top = `calc(50% + ${randomOffset}px + ${verticalPosition}px)`;
+                    }
+                } else {
+                    // 默认位置（垂直居中）并加上垂直位置调整值
+                    point.style.top = `calc(50% + ${verticalPosition}px)`;
+                }
+            });
+            
+            verticalPositionValue.textContent = verticalPosition + 'px';
+        });
+    }
+    
     // 重置按钮功能
     resetBtn.addEventListener('click', () => {
         // 重置高度滑块
@@ -969,20 +1189,20 @@ function initControlPanel(timeline) {
         heightValue.textContent = '150px';
         
         // 重置大小滑块
-        sizeSlider.value = 88;
+        sizeSlider.value = 130;
         const timelinePoints = document.querySelectorAll('.timeline-point');
         timelinePoints.forEach(point => {
-            point.style.width = '110px';
-            point.style.height = '110px';
-            point.style.fontSize = '88px';
-            point.style.lineHeight = '110px';
+            point.style.width = '130px';
+            point.style.height = '130px';
+            point.style.fontSize = '130px';
+            point.style.lineHeight = '130px';
         });
-        sizeValue.textContent = '88px';
+        sizeValue.textContent = '130px';
         
         // 重置间距滑块
-        spacingSlider.value = 132;
+        spacingSlider.value = 200;
         if (timeline) {
-            timeline.pointSpacing = 132;
+            timeline.pointSpacing = 200;
             timeline.allPointsData = []; // 清空现有数据
             timeline.generatePointsData(); // 重新生成点数据
             
@@ -992,7 +1212,7 @@ function initControlPanel(timeline) {
             
             timeline.renderVisiblePoints(); // 重新渲染可见点
         }
-        spacingValue.textContent = '132px';
+        spacingValue.textContent = '200px';
         
         // 重置线间距滑块
         lineSpacingSlider.value = 20;
@@ -1013,6 +1233,66 @@ function initControlPanel(timeline) {
         });
         
         lineSpacingValue.textContent = '20%';
+        
+        // 重置线宽滑块
+        if (lineWidthSlider) {
+            lineWidthSlider.value = 5;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            timelineLines.forEach(line => {
+                line.style.height = '5px';
+            });
+            lineWidthValue.textContent = '5px';
+        }
+        
+        // 重置发光范围滑块
+        if (lineGlowSlider) {
+            lineGlowSlider.value = 8;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            const colors = ['#ff6b6b', '#7afcff', '#feff9c', '#d8b4fe', '#ffcb6b'];
+            
+            timelineLines.forEach((line, index) => {
+                const color = colors[index];
+                line.style.boxShadow = `0 0 8px ${color}`;
+            });
+            lineGlowValue.textContent = '8px';
+        }
+        
+        // 重置垂直随机范围滑块
+        if (verticalRangeSlider) {
+            verticalRangeSlider.value = 200;
+            timeline.verticalRange = 200;
+            
+            // 重新渲染所有可见点以应用新的垂直位置
+            timeline.allPointsData = []; // 清空现有数据
+            timeline.generatePointsData(); // 重新生成点数据
+            
+            // 清除现有的所有点元素
+            timeline.pointsContainer.innerHTML = '';
+            timeline.visiblePoints.clear();
+            
+            timeline.renderVisiblePoints(); // 重新渲染可见点
+            
+            verticalRangeValue.textContent = '200px';
+        }
+        
+        // 重置垂直位置调整滑块
+        if (verticalPositionSlider) {
+            verticalPositionSlider.value = 30;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            const triangleIndicator = document.querySelector('.triangle-indicator');
+            
+            // 重置五线谱线条的位置
+            timelineLines.forEach((line, index) => {
+                line.style.transform = `translateY(30px)`;
+            });
+            
+            // 重置三角形指示器的位置
+            if (triangleIndicator) {
+                triangleIndicator.style.transform = `translateX(-50%) translateY(calc(-7.5px + 30px))`;
+            }
+            
+            verticalPositionValue.textContent = '30px';
+        }
     });
     
     // 确认保存按钮功能
@@ -1024,7 +1304,11 @@ function initControlPanel(timeline) {
                 timelineHeight: heightSlider.value,
                 noteSize: sizeSlider.value,
                 noteSpacing: spacingSlider.value,
-                lineSpacing: lineSpacingSlider.value
+                lineSpacing: lineSpacingSlider.value,
+                lineWidth: lineWidthSlider ? lineWidthSlider.value : 5,
+                lineGlow: lineGlowSlider ? lineGlowSlider.value : 8,
+                verticalRange: verticalRangeSlider ? verticalRangeSlider.value : 0,
+                verticalPosition: verticalPositionSlider ? verticalPositionSlider.value : 120
             };
             
             // 保存到localStorage
@@ -1092,7 +1376,72 @@ function initControlPanel(timeline) {
                 line.style.top = newPosition + '%';
             }
         });
-        
         lineSpacingValue.textContent = settings.lineSpacing + '%';
+        
+        // 应用线宽
+        if (lineWidthSlider && settings.lineWidth) {
+            lineWidthSlider.value = settings.lineWidth;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            timelineLines.forEach(line => {
+                line.style.height = settings.lineWidth + 'px';
+            });
+            lineWidthValue.textContent = settings.lineWidth + 'px';
+        }
+        
+        // 应用发光范围
+        if (lineGlowSlider && settings.lineGlow) {
+            lineGlowSlider.value = settings.lineGlow;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            const colors = ['#ff6b6b', '#7afcff', '#feff9c', '#d8b4fe', '#ffcb6b'];
+            
+            timelineLines.forEach((line, index) => {
+                const color = colors[index];
+                line.style.boxShadow = `0 0 ${settings.lineGlow}px ${color}`;
+            });
+            lineGlowValue.textContent = settings.lineGlow + 'px';
+        }
+        
+        // 应用垂直随机范围
+        if (verticalRangeSlider && settings.verticalRange !== undefined) {
+            verticalRangeSlider.value = settings.verticalRange;
+            timeline.verticalRange = parseInt(settings.verticalRange);
+            
+            // 重新渲染所有可见点以应用新的垂直位置
+            timeline.allPointsData = []; // 清空现有数据
+            timeline.generatePointsData(); // 重新生成点数据
+            
+            // 清除现有的所有点元素
+            timeline.pointsContainer.innerHTML = '';
+            timeline.visiblePoints.clear();
+            
+            timeline.renderVisiblePoints(); // 重新渲染可见点
+            
+            verticalRangeValue.textContent = settings.verticalRange + 'px';
+        }
+        
+        // 应用垂直位置调整
+        if (verticalPositionSlider && settings.verticalPosition !== undefined) {
+            verticalPositionSlider.value = settings.verticalPosition;
+            const timelineLines = document.querySelectorAll('.timeline-line');
+            const triangleIndicator = document.querySelector('.triangle-indicator');
+            
+            // 应用五线谱线条的位置
+            timelineLines.forEach((line, index) => {
+                line.style.transform = `translateY(${settings.verticalPosition}px)`;
+            });
+            
+            // 应用三角形指示器的位置
+            if (triangleIndicator) {
+                triangleIndicator.style.transform = `translateX(-50%) translateY(calc(-7.5px + ${settings.verticalPosition}px))`;
+            }
+            
+            verticalPositionValue.textContent = settings.verticalPosition + 'px';
+        }
+    } else {
+        // 如果没有保存的设置，则应用默认的垂直位置调整
+        if (verticalPositionSlider) {
+            verticalPositionSlider.value = 30;
+            verticalPositionValue.textContent = '30px';
+        }
     }
 }

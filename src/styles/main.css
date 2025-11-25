@@ -928,7 +928,7 @@ body {
     max-width: none;
     margin-left: 0;
     margin-right: 0;
-    /* 修改：将垂直内边距增加一倍，确保三角形指示器的发光效果完全可见 */
+    /* 修改：将垂直内边距恢复默认值，使用transform调整位置 */
     padding: 120px 0;
     /* 确保容器具有适当的z-index */
     z-index: 10;
@@ -943,7 +943,7 @@ body {
     /* 使用合适的数值使线条与容器匹配 */
     left: 0;
     right: 0;
-    height: 2px;
+    height: 5px;
     background-color: rgba(100, 200, 255, 0.3);
     z-index: 1;
 }
@@ -1007,7 +1007,7 @@ body {
 /* 三角形指示标样式 */
 .triangle-indicator {
     position: absolute;
-    top: -25px;
+    top: -7.5px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
@@ -1016,19 +1016,8 @@ body {
     border-right: 15px solid transparent;
     border-top: 25px solid #FFD700;
     z-index: 999;
-    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.9))
-            drop-shadow(0 0 12px rgba(255, 215, 0, 0.7))
-            drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
-    /* 修改：只为三角形指示器使用垂直浮动动画，而不是通用的float动画 */
-    animation: triangleFloat 2s ease-in-out infinite, breathe 2s ease-in-out infinite;
-    /* 确保指示器可见 */
-    display: block !important;
-    visibility: visible !important;
-    pointer-events: none; /* 防止遮挡下方元素的交互 */
-    /* 添加额外的可见性保障 */
-    opacity: 1 !important;
-    /* 确保指示器在正确的容器中 */
-    position: absolute;
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.8));
+    animation: triangleFloat 3s ease-in-out infinite, breathe 2s ease-in-out infinite;
 }
 
 /* 浮动动画 */
@@ -1047,13 +1036,13 @@ body {
 /* 为三角形指示器专门设计的垂直浮动动画 */
 @keyframes triangleFloat {
     0% {
-        transform: translateX(-50%) translateY(0px);
+        transform: translateX(-50%) translateY(calc(-7.5px + 0px));
     }
     50% {
-        transform: translateX(-50%) translateY(-5px);
+        transform: translateX(-50%) translateY(calc(-7.5px + -5px));
     }
     100% {
-        transform: translateX(-50%) translateY(0px);
+        transform: translateX(-50%) translateY(calc(-7.5px + 0px));
     }
 }
 
@@ -1086,8 +1075,8 @@ body {
 
 .timeline-point {
     position: absolute;
-    width: 110px;
-    height: 110px;
+    width: 130px;
+    height: 130px;
     /* 移除背景色和圆角，使用音符样式 */
     /* transform: translate(-50%, -50%); */
     transition: all 0.3s ease;
@@ -1098,9 +1087,9 @@ body {
     justify-content: center;
     /* 音符样式 */
     color: white;
-    font-size: 88px;
+    font-size: 130px;
     text-align: center;
-    line-height: 110px;
+    line-height: 130px;
     /* 添加旋转效果使音符更灵动 */
     /* transform: translate(-50%, -50%) rotate(0deg); */
     /* 添加阴影使音符更有立体感 */
@@ -1205,7 +1194,14 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     transition: all 0.3s ease;
-    z-index: 20;
+    z-index: 1002;
+    /* 添加以下样式使控制台可拖动 */
+    position: fixed;
+    top: 150px;
+    right: 20px;
+    width: 350px;
+    margin: 0;
+    cursor: move;
 }
 
 .control-panel-header {
